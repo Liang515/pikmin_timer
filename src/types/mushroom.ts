@@ -1,0 +1,16 @@
+export interface AreaGroup {
+  id: string;
+  name: string;
+}
+
+export interface Mushroom {
+  id: string;
+  name: string;
+  groupId: string; // To link with AreaGroup
+  battleEndTime: number; // Timestamp of battle completion
+  endTime: number; // Timestamp of respawn (battleEndTime + 5 mins)
+  participants: number;
+  note: string;
+  isFavorite: boolean;
+  color: string;
+}
