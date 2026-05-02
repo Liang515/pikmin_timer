@@ -207,19 +207,19 @@ export default function PikminDashboard() {
   });
 
   return (
-    <main className="min-h-screen bg-slate-100 dark:bg-slate-950 p-4 pb-24 md:p-8 font-sans transition-colors duration-300">
-      <header className="flex justify-between items-center mb-6 max-w-2xl mx-auto">
+    <main className="min-h-screen bg-slate-100 dark:bg-slate-950 p-3 sm:p-4 pb-24 md:p-8 font-sans transition-colors duration-300">
+      <header className="flex justify-between items-center mb-4 sm:mb-6 max-w-2xl mx-auto">
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight flex items-center gap-2">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight flex items-center gap-1.5 sm:gap-2">
             {t.title}
           </h1>
         </div>
-        <div className="flex gap-2">
-          <button onClick={() => setLang(lang === 'zh' ? 'en' : 'zh')} className="px-3 py-2 bg-white dark:bg-slate-800 rounded-xl shadow-sm text-slate-600 dark:text-slate-300 active:scale-95 transition-transform hover:shadow-md font-bold flex items-center gap-1.5">
+        <div className="flex gap-1.5 sm:gap-2">
+          <button onClick={() => setLang(lang === 'zh' ? 'en' : 'zh')} className="px-2.5 sm:px-3 py-2 bg-white dark:bg-slate-800 rounded-xl shadow-sm text-slate-600 dark:text-slate-300 active:scale-95 transition-transform hover:shadow-md font-bold flex items-center gap-1 sm:gap-1.5 text-sm sm:text-base">
              <Globe size={18} /> <span className="hidden sm:inline">{t.languageToggle}</span>
           </button>
-          <button onClick={() => window.location.href='pikminbloom://'} className="p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm text-green-600 dark:text-green-400 active:scale-95 transition-transform hover:shadow-md">
-             <ExternalLink size={24} />
+          <button onClick={() => window.location.href='pikminbloom://'} className="p-2 sm:p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm text-green-600 dark:text-green-400 active:scale-95 transition-transform hover:shadow-md">
+             <ExternalLink className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         </div>
       </header>
@@ -300,11 +300,11 @@ export default function PikminDashboard() {
 
       {/* Modern Add Modal */}
       {isAdding && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200">
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onClick={() => setIsAdding(false)}></div>
-          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[2rem] p-6 shadow-2xl relative z-10 animate-in slide-in-from-bottom-10 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-800">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-extrabold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[2rem] p-5 sm:p-6 shadow-2xl relative z-10 animate-in slide-in-from-bottom-10 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-800">
+            <div className="flex justify-between items-center mb-4 sm:mb-6">
+              <h2 className="text-xl sm:text-2xl font-extrabold text-slate-800 dark:text-slate-100 flex items-center gap-2">
                  <Sparkles className="text-amber-500" size={24} />
                  {t.addTo} {groups.find(g => g.id === activeGroupId)?.name}
               </h2>
@@ -354,18 +354,18 @@ export default function PikminDashboard() {
                  </div>
                  <div className="flex gap-2">
                     <div className="flex-1 relative">
-                       <input id="quick-h" type="text" inputMode="numeric" pattern="[0-9]*" placeholder="00" className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 p-3 pb-6 rounded-2xl outline-none focus:border-blue-500 transition-all text-center text-3xl font-mono font-bold placeholder:text-slate-300 dark:placeholder:text-slate-600 text-slate-800 dark:text-slate-100" onInput={e => { const t = e.target as HTMLInputElement; t.value = t.value.replace(/\D/g, '').slice(0, 2); if (t.value.length >= 2) document.getElementById('quick-m')?.focus() }} />
-                       <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[11px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Hrs</span>
+                       <input id="quick-h" type="text" inputMode="numeric" pattern="[0-9]*" placeholder="00" className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 p-2 sm:p-3 pb-5 sm:pb-6 rounded-2xl outline-none focus:border-blue-500 transition-all text-center text-2xl sm:text-3xl font-mono font-bold placeholder:text-slate-300 dark:placeholder:text-slate-600 text-slate-800 dark:text-slate-100" onInput={e => { const t = e.target as HTMLInputElement; t.value = t.value.replace(/\D/g, '').slice(0, 2); if (t.value.length >= 2) document.getElementById('quick-m')?.focus() }} />
+                       <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Hrs</span>
                     </div>
-                    <span className="text-2xl font-bold text-slate-300 dark:text-slate-600 self-center mb-6">:</span>
+                    <span className="text-2xl sm:text-3xl font-bold text-slate-300 dark:text-slate-600 self-center mb-5 sm:mb-6">:</span>
                     <div className="flex-1 relative">
-                       <input id="quick-m" type="text" inputMode="numeric" pattern="[0-9]*" placeholder="00" className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 p-3 pb-6 rounded-2xl outline-none focus:border-blue-500 transition-all text-center text-3xl font-mono font-bold placeholder:text-slate-300 dark:placeholder:text-slate-600 text-slate-800 dark:text-slate-100" onInput={e => { const t = e.target as HTMLInputElement; t.value = t.value.replace(/\D/g, '').slice(0, 2); if (t.value.length >= 2) document.getElementById('quick-s')?.focus() }} />
-                       <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[11px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Min</span>
+                       <input id="quick-m" type="text" inputMode="numeric" pattern="[0-9]*" placeholder="00" className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 p-2 sm:p-3 pb-5 sm:pb-6 rounded-2xl outline-none focus:border-blue-500 transition-all text-center text-2xl sm:text-3xl font-mono font-bold placeholder:text-slate-300 dark:placeholder:text-slate-600 text-slate-800 dark:text-slate-100" onInput={e => { const t = e.target as HTMLInputElement; t.value = t.value.replace(/\D/g, '').slice(0, 2); if (t.value.length >= 2) document.getElementById('quick-s')?.focus() }} />
+                       <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Min</span>
                     </div>
-                    <span className="text-2xl font-bold text-slate-300 dark:text-slate-600 self-center mb-6">:</span>
+                    <span className="text-2xl sm:text-3xl font-bold text-slate-300 dark:text-slate-600 self-center mb-5 sm:mb-6">:</span>
                     <div className="flex-1 relative">
-                       <input id="quick-s" type="text" inputMode="numeric" pattern="[0-9]*" placeholder="00" className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 p-3 pb-6 rounded-2xl outline-none focus:border-blue-500 transition-all text-center text-3xl font-mono font-bold placeholder:text-slate-300 dark:placeholder:text-slate-600 text-slate-800 dark:text-slate-100" onInput={e => { const t = e.target as HTMLInputElement; t.value = t.value.replace(/\D/g, '').slice(0, 2); }} />
-                       <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[11px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Sec</span>
+                       <input id="quick-s" type="text" inputMode="numeric" pattern="[0-9]*" placeholder="00" className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 p-2 sm:p-3 pb-5 sm:pb-6 rounded-2xl outline-none focus:border-blue-500 transition-all text-center text-2xl sm:text-3xl font-mono font-bold placeholder:text-slate-300 dark:placeholder:text-slate-600 text-slate-800 dark:text-slate-100" onInput={e => { const t = e.target as HTMLInputElement; t.value = t.value.replace(/\D/g, '').slice(0, 2); }} />
+                       <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Sec</span>
                     </div>
                  </div>
               </div>
@@ -439,28 +439,28 @@ function MushroomItem({ m, now, lang, isEditing, setEditingId, onDelete, onUpdat
 
   if (isEditing) {
     return (
-      <div className="bg-white p-5 rounded-3xl shadow-sm border-2 border-blue-500 transition-all">
+      <div className="bg-white p-4 sm:p-5 rounded-3xl shadow-sm border-2 border-blue-500 transition-all">
         <div className="flex gap-2 mb-3">
           <input 
             defaultValue={m.name} 
             onChange={e => onUpdate(m.id, { name: e.target.value })}
-            className="border p-2 rounded-lg flex-1 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500"
+            className="border p-2 rounded-lg flex-1 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
             placeholder={t.defaultMushroom}
           />
-          <div className="flex items-center border rounded-lg px-2 gap-2 focus-within:ring-2 focus-within:ring-blue-500">
+          <div className="flex items-center border rounded-lg px-2 gap-1 sm:gap-2 focus-within:ring-2 focus-within:ring-blue-500">
             <Users size={16} className="text-slate-400" />
             <input 
               type="number" 
               value={editP} 
               onChange={e => setEditP(parseInt(e.target.value) || 5)}
-              className="w-10 outline-none font-bold text-slate-700 bg-transparent text-center"
+              className="w-8 sm:w-10 outline-none font-bold text-slate-700 bg-transparent text-center text-sm sm:text-base"
             />
           </div>
         </div>
 
-        <div className="flex flex-col gap-2 mb-4 bg-slate-50 p-3 rounded-xl border border-slate-200">
-          <div className="text-sm text-slate-500 font-bold mb-1 flex items-center gap-1"><Clock size={14} /> {t.resetTime}</div>
-          <div className="flex gap-2 items-center">
+        <div className="flex flex-col gap-2 mb-4 bg-slate-50 p-2.5 sm:p-3 rounded-xl border border-slate-200">
+          <div className="text-xs sm:text-sm text-slate-500 font-bold mb-1 flex items-center gap-1"><Clock size={14} /> {t.resetTime}</div>
+          <div className="flex gap-1.5 sm:gap-2 items-center">
             <input 
               ref={hRef}
               type="text" inputMode="numeric" pattern="[0-9]*" 
@@ -471,7 +471,7 @@ function MushroomItem({ m, now, lang, isEditing, setEditingId, onDelete, onUpdat
                 setEditH(val);
                 if (val.length === 2 && mRef.current) mRef.current.focus();
               }}
-              className="w-full text-center p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 font-mono text-lg font-bold bg-white"
+              className="w-full text-center p-1.5 sm:p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 font-mono text-base sm:text-lg font-bold bg-white"
             />
             <span className="font-bold text-slate-400">:</span>
             <input 
@@ -484,7 +484,7 @@ function MushroomItem({ m, now, lang, isEditing, setEditingId, onDelete, onUpdat
                 setEditM(val);
                 if (val.length === 2 && sRef.current) sRef.current.focus();
               }}
-              className="w-full text-center p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 font-mono text-lg font-bold bg-white"
+              className="w-full text-center p-1.5 sm:p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 font-mono text-base sm:text-lg font-bold bg-white"
             />
             <span className="font-bold text-slate-400">:</span>
             <input 
@@ -496,7 +496,7 @@ function MushroomItem({ m, now, lang, isEditing, setEditingId, onDelete, onUpdat
                 const val = e.target.value.replace(/\D/g, '').slice(0, 2);
                 setEditS(val);
               }}
-              className="w-full text-center p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 font-mono text-lg font-bold bg-white"
+              className="w-full text-center p-1.5 sm:p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 font-mono text-base sm:text-lg font-bold bg-white"
             />
           </div>
         </div>
@@ -556,19 +556,19 @@ function MushroomItem({ m, now, lang, isEditing, setEditingId, onDelete, onUpdat
       </div>
 
       <div className="flex items-center gap-4 w-full sm:w-auto justify-between mt-2 sm:mt-0">
-        <div className="flex gap-1.5 font-mono text-3xl font-bold">
-          {isOver ? <span className="text-xl flex items-center gap-2"><Sparkles size={20}/> {t.respawnComplete}</span> : (
+        <div className="flex gap-1 sm:gap-1.5 font-mono text-2xl sm:text-3xl font-bold">
+          {isOver ? <span className="text-lg sm:text-xl flex items-center gap-2"><Sparkles size={20}/> {t.respawnComplete}</span> : (
             <>
-              <div className="bg-black/20 px-2 py-1 rounded-lg flex flex-col items-center min-w-[50px]">
-                <span className="text-2xl">{timeFmt.h}</span>
+              <div className="bg-black/20 px-1.5 sm:px-2 py-1 rounded-lg flex flex-col items-center min-w-[40px] sm:min-w-[50px]">
+                <span className="text-xl sm:text-2xl">{timeFmt.h}</span>
               </div>
               <span className="opacity-50">:</span>
-              <div className="bg-black/20 px-2 py-1 rounded-lg flex flex-col items-center min-w-[50px]">
-                <span className="text-2xl">{timeFmt.m}</span>
+              <div className="bg-black/20 px-1.5 sm:px-2 py-1 rounded-lg flex flex-col items-center min-w-[40px] sm:min-w-[50px]">
+                <span className="text-xl sm:text-2xl">{timeFmt.m}</span>
               </div>
               <span className="opacity-50">:</span>
-              <div className="bg-black/20 px-2 py-1 rounded-lg flex flex-col items-center min-w-[50px]">
-                <span className="text-2xl">{timeFmt.s}</span>
+              <div className="bg-black/20 px-1.5 sm:px-2 py-1 rounded-lg flex flex-col items-center min-w-[40px] sm:min-w-[50px]">
+                <span className="text-xl sm:text-2xl">{timeFmt.s}</span>
               </div>
             </>
           )}

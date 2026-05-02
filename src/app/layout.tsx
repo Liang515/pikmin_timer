@@ -10,6 +10,11 @@ const outfit = Outfit({
 export const metadata: Metadata = {
   title: "Pikmin Mushroom Timer",
   description: "A gorgeous tracker for Pikmin Bloom mushroom battles.",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Mushroom Timer",
+  },
 };
 
 export default function RootLayout({
