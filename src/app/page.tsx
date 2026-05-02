@@ -1,7 +1,85 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, ExternalLink, Trash2, RotateCcw, Clock, BellRing, Sparkles, Users, Edit3, Check, X, MapPin } from 'lucide-react';
+import { Plus, ExternalLink, Trash2, RotateCcw, Clock, BellRing, Sparkles, Users, Edit3, Check, X, MapPin, Globe } from 'lucide-react';
 import { Mushroom, AreaGroup } from '@/types/mushroom';
+
+type Lang = 'zh' | 'en';
+const T = {
+  zh: {
+    home: '首頁',
+    battleEnded: '⚔️ 戰鬥結束！',
+    battleEndedBody: (name: string) => `${name} 的戰鬥已完成，5分鐘後重生。`,
+    respawned: '🍄 蘑菇已重生！',
+    respawnedBody: (name: string) => `${name} 已經重生完畢！`,
+    defaultMushroom: '蘑菇',
+    enterArea: '請輸入區域名稱:',
+    newArea: '新區域',
+    keepOneArea: '至少需保留一個區域',
+    confirmDeleteArea: '確定要刪除此區域嗎？其中的紀錄也會一起刪除。',
+    renameArea: '重新命名區域:',
+    title: '🍄 蘑菇戰報',
+    deleteTab: '刪除目前分頁',
+    noRecords: (name: string) => `「${name}」目前沒有紀錄`,
+    clickToAdd: '點擊右下角 + 開始新增',
+    addTo: '新增至 ',
+    mushroomName: '蘑菇名稱 (選填)',
+    mushroomNamePlaceholder: '例如：火屬性巨大蘑菇',
+    participants: '參戰人數',
+    remainingTime: '剩餘戰鬥時間',
+    m15: '15分',
+    m30: '30分',
+    h1: '1小時',
+    h3: '3小時',
+    h8: '8小時',
+    startTracking: '建立追蹤',
+    resetTime: '重新設定剩餘時間 (選填)',
+    saveChanges: '儲存修改',
+    cancel: '取消',
+    players: '人',
+    respawning: '重生中',
+    battleEnds: '戰鬥結束：',
+    estRespawn: '預計重生：',
+    respawnComplete: '重生完成',
+    languageToggle: 'EN'
+  },
+  en: {
+    home: 'Home',
+    battleEnded: '⚔️ Battle Ended!',
+    battleEndedBody: (name: string) => `${name} battle completed. Respawning in 5 mins.`,
+    respawned: '🍄 Mushroom Respawned!',
+    respawnedBody: (name: string) => `${name} has respawned!`,
+    defaultMushroom: 'Mushroom',
+    enterArea: 'Enter area name:',
+    newArea: 'New Area',
+    keepOneArea: 'At least one area must be kept.',
+    confirmDeleteArea: 'Delete this area and all its records?',
+    renameArea: 'Rename area:',
+    title: '🍄 Mushroom Timer',
+    deleteTab: 'Delete current tab',
+    noRecords: (name: string) => `No records in '${name}'`,
+    clickToAdd: 'Click + to add a mushroom',
+    addTo: 'Add to ',
+    mushroomName: 'Mushroom Name (Optional)',
+    mushroomNamePlaceholder: 'e.g., Large Fire Mushroom',
+    participants: 'Participants',
+    remainingTime: 'Remaining Battle Time',
+    m15: '15m',
+    m30: '30m',
+    h1: '1h',
+    h3: '3h',
+    h8: '8h',
+    startTracking: 'Start Tracking',
+    resetTime: 'Reset Time (Optional)',
+    saveChanges: 'Save Changes',
+    cancel: 'Cancel',
+    players: 'players',
+    respawning: 'Respawning',
+    battleEnds: 'Battle Ends: ',
+    estRespawn: 'Est. Respawn: ',
+    respawnComplete: 'Respawn Complete',
+    languageToggle: '中'
+  }
+};
 
 const COLORS = [
   'from-blue-400 to-indigo-500 shadow-blue-500/30',
@@ -18,17 +96,25 @@ export default function PikminDashboard() {
   const [now, setNow] = useState(Date.now());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
+  const [lang, setLang] = useState<Lang>('zh');
   const notifiedSet = useRef<Set<string>>(new Set());
+
+  const t = T[lang];
 
   useEffect(() => {
     const savedMs = localStorage.getItem('pikmin_mushrooms');
     const savedGroups = localStorage.getItem('pikmin_groups');
+    const savedLang = localStorage.getItem('pikmin_lang') as Lang;
     
+    if (savedLang && (savedLang === 'zh' || savedLang === 'en')) {
+      setLang(savedLang);
+    }
+
     let initialGroups: AreaGroup[] = [];
     if (savedGroups) {
       initialGroups = JSON.parse(savedGroups);
     } else {
-      initialGroups = [{ id: 'default', name: '首頁' }];
+      initialGroups = [{ id: 'default', name: savedLang === 'en' ? 'Home' : '首頁' }];
     }
     setGroups(initialGroups);
     setActiveGroupId(initialGroups[0].id);
@@ -44,23 +130,24 @@ export default function PikminDashboard() {
   useEffect(() => {
     localStorage.setItem('pikmin_mushrooms', JSON.stringify(mushrooms));
     localStorage.setItem('pikmin_groups', JSON.stringify(groups));
+    localStorage.setItem('pikmin_lang', lang);
     
     mushrooms.forEach(m => {
       const bEnd = m.battleEndTime || (m.endTime - 5 * 60000);
       if (now >= bEnd && !notifiedSet.current.has(m.id + '_battle')) {
         notifiedSet.current.add(m.id + '_battle');
         if ('Notification' in window && Notification.permission === 'granted') {
-          new Notification('⚔️ 戰鬥結束！', { body: `${m.name} 的戰鬥已完成，5分鐘後重生。` });
+          new Notification(T[lang].battleEnded, { body: T[lang].battleEndedBody(m.name) });
         }
       }
       if (now >= m.endTime && !notifiedSet.current.has(m.id + '_respawn')) {
         notifiedSet.current.add(m.id + '_respawn');
         if ('Notification' in window && Notification.permission === 'granted') {
-          new Notification('🍄 蘑菇已重生！', { body: `${m.name} 已經重生完畢！` });
+          new Notification(T[lang].respawned, { body: T[lang].respawnedBody(m.name) });
         }
       }
     });
-  }, [mushrooms, groups, now]);
+  }, [mushrooms, groups, now, lang]);
 
   const addMushroom = (h: number, m: number, s: number, name: string, participants: number) => {
     const battleMs = (h * 3600 + m * 60 + s) * 1000;
@@ -68,9 +155,10 @@ export default function PikminDashboard() {
     const endTime = battleEndTime + 5 * 60 * 1000;
     const newMs: Mushroom = {
       id: crypto.randomUUID(),
-      name: name || `蘑菇`,
+      name: name || t.defaultMushroom,
       groupId: activeGroupId,
       participants: participants || 5,
+      startTime: Date.now(),
       battleEndTime,
       endTime,
       note: "",
@@ -92,7 +180,7 @@ export default function PikminDashboard() {
   };
 
   const addGroup = () => {
-    const name = prompt("請輸入區域名稱:", "新區域");
+    const name = prompt(t.enterArea, t.newArea);
     if (name) {
       const newGroup = { id: crypto.randomUUID(), name };
       setGroups([...groups, newGroup]);
@@ -101,8 +189,8 @@ export default function PikminDashboard() {
   };
 
   const deleteGroup = (id: string) => {
-    if (groups.length <= 1) return alert("至少需保留一個區域");
-    if (confirm("確要刪除此區域嗎？其中的紀錄也會一起刪除。")) {
+    if (groups.length <= 1) return alert(t.keepOneArea);
+    if (confirm(t.confirmDeleteArea)) {
       setGroups(groups.filter(g => g.id !== id));
       setMushrooms(mushrooms.filter(m => m.groupId !== id));
       if (activeGroupId === id) setActiveGroupId(groups[0].id);
@@ -119,16 +207,21 @@ export default function PikminDashboard() {
   });
 
   return (
-    <main className="min-h-screen bg-slate-100 p-4 pb-24 md:p-8 font-sans">
+    <main className="min-h-screen bg-slate-100 dark:bg-slate-950 p-4 pb-24 md:p-8 font-sans transition-colors duration-300">
       <header className="flex justify-between items-center mb-6 max-w-2xl mx-auto">
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight flex items-center gap-2">
-            🍄 蘑菇戰報
+          <h1 className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight flex items-center gap-2">
+            {t.title}
           </h1>
         </div>
-        <button onClick={() => window.location.href='pikminbloom://'} className="p-3 bg-white rounded-xl shadow-sm text-green-600 active:scale-95 transition-transform">
-           <ExternalLink size={24} />
-        </button>
+        <div className="flex gap-2">
+          <button onClick={() => setLang(lang === 'zh' ? 'en' : 'zh')} className="px-3 py-2 bg-white dark:bg-slate-800 rounded-xl shadow-sm text-slate-600 dark:text-slate-300 active:scale-95 transition-transform hover:shadow-md font-bold flex items-center gap-1.5">
+             <Globe size={18} /> <span className="hidden sm:inline">{t.languageToggle}</span>
+          </button>
+          <button onClick={() => window.location.href='pikminbloom://'} className="p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm text-green-600 dark:text-green-400 active:scale-95 transition-transform hover:shadow-md">
+             <ExternalLink size={24} />
+          </button>
+        </div>
       </header>
 
       {/* Tabs / Groups Selection */}
@@ -139,13 +232,13 @@ export default function PikminDashboard() {
               key={g.id}
               onClick={() => setActiveGroupId(g.id)}
               onDoubleClick={() => {
-                const newName = prompt("重新命名區域:", g.name);
+                const newName = prompt(t.renameArea, g.name);
                 if (newName) setGroups(groups.map(group => group.id === g.id ? {...group, name: newName} : group));
               }}
               className={`px-5 py-2.5 rounded-2xl whitespace-nowrap font-bold transition-all flex items-center gap-2 active:scale-95 shadow-sm ${
                 activeGroupId === g.id 
                   ? 'bg-blue-600 text-white shadow-blue-500/20' 
-                  : 'bg-white text-slate-500 hover:bg-slate-50'
+                  : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
               }`}
             >
               <MapPin size={16} />
@@ -157,15 +250,15 @@ export default function PikminDashboard() {
           ))}
           <button 
             onClick={addGroup}
-            className="p-2.5 bg-slate-200 text-slate-600 rounded-2xl hover:bg-slate-300 transition-all flex items-center justify-center min-w-[45px] active:scale-95"
+            className="p-2.5 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl hover:bg-slate-300 dark:hover:bg-slate-700 transition-all flex items-center justify-center min-w-[45px] active:scale-95"
           >
             <Plus size={20} />
           </button>
         </div>
         <button 
            onClick={() => deleteGroup(activeGroupId)}
-           className="p-2.5 bg-white text-rose-500 rounded-2xl shadow-sm hover:bg-rose-50 transition-all active:scale-95"
-           title="刪除目前分頁"
+           className="p-2.5 bg-white dark:bg-slate-800 text-rose-500 rounded-2xl shadow-sm hover:bg-rose-50 dark:hover:bg-rose-950 transition-all active:scale-95"
+           title={t.deleteTab}
         >
           <Trash2 size={20} />
         </button>
@@ -173,10 +266,10 @@ export default function PikminDashboard() {
 
       <div className="grid gap-4 max-w-2xl mx-auto">
         {activeMushrooms.length === 0 && (
-          <div className="text-center p-12 bg-white rounded-3xl border-2 border-dashed border-slate-200 text-slate-400">
+          <div className="text-center p-12 bg-white dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500">
             <Sparkles className="mx-auto mb-3 opacity-50" size={32} />
-            <p className="font-bold">「{groups.find(g => g.id === activeGroupId)?.name}」目前沒有紀錄</p>
-            <p className="text-sm mt-1">點擊右下角 + 開始新增</p>
+            <p className="font-bold text-slate-500 dark:text-slate-400">{t.noRecords(groups.find(g => g.id === activeGroupId)?.name || '')}</p>
+            <p className="text-sm mt-1">{t.clickToAdd}</p>
           </div>
         )}
         {sortedMushrooms.map(m => (
@@ -184,6 +277,7 @@ export default function PikminDashboard() {
             key={m.id} 
             m={m} 
             now={now} 
+            lang={lang}
             isEditing={editingId === m.id}
             setEditingId={setEditingId}
             onDelete={deleteMushroom} 
@@ -208,47 +302,70 @@ export default function PikminDashboard() {
       {isAdding && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onClick={() => setIsAdding(false)}></div>
-          <div className="bg-white w-full max-w-md rounded-[2rem] p-6 shadow-2xl relative z-10 animate-in slide-in-from-bottom-10 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[2rem] p-6 shadow-2xl relative z-10 animate-in slide-in-from-bottom-10 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-800">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-extrabold text-slate-800 flex items-center gap-2">
+              <h2 className="text-2xl font-extrabold text-slate-800 dark:text-slate-100 flex items-center gap-2">
                  <Sparkles className="text-amber-500" size={24} />
-                 新增至 {groups.find(g => g.id === activeGroupId)?.name}
+                 {t.addTo} {groups.find(g => g.id === activeGroupId)?.name}
               </h2>
-              <button onClick={() => setIsAdding(false)} className="p-2 bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200 active:scale-95 transition-all">
+              <button onClick={() => setIsAdding(false)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 transition-all">
                 <X size={20} />
               </button>
             </div>
             
             <div className="grid gap-5">
               <div>
-                 <label className="block text-sm font-bold text-slate-600 mb-2">蘑菇名稱 (選填)</label>
-                 <input id="quick-name" placeholder="例如：火屬性巨大蘑菇" className="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-blue-500 focus:bg-white transition-all text-lg font-medium placeholder:text-slate-400" />
+                 <label className="block text-sm font-bold text-slate-600 dark:text-slate-300 mb-2">{t.mushroomName}</label>
+                 <input id="quick-name" placeholder={t.mushroomNamePlaceholder} className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 p-4 rounded-2xl outline-none focus:border-blue-500 dark:focus:border-blue-500 transition-all text-lg font-medium placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-800 dark:text-slate-100" />
               </div>
               
               <div>
-                 <label className="block text-sm font-bold text-slate-600 mb-2">參戰人數</label>
-                 <div className="flex items-center bg-slate-50 border-2 border-slate-100 rounded-2xl px-4 py-3 focus-within:border-blue-500 focus-within:bg-white transition-all">
-                   <Users size={20} className="text-slate-400 mr-2" />
-                   <input id="quick-p" type="number" defaultValue="5" min="1" className="w-full bg-transparent outline-none font-bold text-xl" />
+                 <label className="block text-sm font-bold text-slate-600 dark:text-slate-300 mb-2">{t.participants}</label>
+                 <div className="flex items-center bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-2xl px-4 py-3 focus-within:border-blue-500 dark:focus-within:border-blue-500 transition-all">
+                   <Users size={20} className="text-slate-400 dark:text-slate-500 mr-2" />
+                   <input id="quick-p" type="number" defaultValue="5" min="1" className="w-full bg-transparent outline-none font-bold text-xl text-slate-800 dark:text-slate-100" />
                  </div>
               </div>
 
               <div>
-                 <label className="block text-sm font-bold text-slate-600 mb-2 flex items-center gap-1"><Clock size={16}/> 剩餘戰鬥時間</label>
+                 <div className="flex justify-between items-center mb-2">
+                   <label className="block text-sm font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1"><Clock size={16}/> {t.remainingTime}</label>
+                 </div>
+                 <div className="flex gap-2 mb-4 overflow-x-auto pb-2 no-scrollbar">
+                   {[
+                     { label: t.m15, h: 0, m: 15, s: 0 },
+                     { label: t.m30, h: 0, m: 30, s: 0 },
+                     { label: t.h1, h: 1, m: 0, s: 0 },
+                     { label: t.h3, h: 3, m: 0, s: 0 },
+                     { label: t.h8, h: 8, m: 0, s: 0 },
+                   ].map(p => (
+                     <button 
+                       key={p.label}
+                       onClick={() => {
+                          (document.getElementById('quick-h') as HTMLInputElement).value = p.h.toString().padStart(2, '0');
+                          (document.getElementById('quick-m') as HTMLInputElement).value = p.m.toString().padStart(2, '0');
+                          (document.getElementById('quick-s') as HTMLInputElement).value = p.s.toString().padStart(2, '0');
+                       }}
+                       className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg text-sm font-bold whitespace-nowrap hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 transition-all"
+                     >
+                       {p.label}
+                     </button>
+                   ))}
+                 </div>
                  <div className="flex gap-2">
                     <div className="flex-1 relative">
-                       <input id="quick-h" type="text" inputMode="numeric" pattern="[0-9]*" placeholder="00" className="w-full bg-slate-50 border-2 border-slate-100 p-3 pb-6 rounded-2xl outline-none focus:border-blue-500 focus:bg-white transition-all text-center text-3xl font-mono font-bold placeholder:text-slate-300" onInput={e => { const t = e.target as HTMLInputElement; t.value = t.value.replace(/\D/g, '').slice(0, 2); if (t.value.length >= 2) document.getElementById('quick-m')?.focus() }} />
-                       <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">Hrs</span>
+                       <input id="quick-h" type="text" inputMode="numeric" pattern="[0-9]*" placeholder="00" className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 p-3 pb-6 rounded-2xl outline-none focus:border-blue-500 transition-all text-center text-3xl font-mono font-bold placeholder:text-slate-300 dark:placeholder:text-slate-600 text-slate-800 dark:text-slate-100" onInput={e => { const t = e.target as HTMLInputElement; t.value = t.value.replace(/\D/g, '').slice(0, 2); if (t.value.length >= 2) document.getElementById('quick-m')?.focus() }} />
+                       <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[11px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Hrs</span>
                     </div>
-                    <span className="text-2xl font-bold text-slate-300 self-center mb-6">:</span>
+                    <span className="text-2xl font-bold text-slate-300 dark:text-slate-600 self-center mb-6">:</span>
                     <div className="flex-1 relative">
-                       <input id="quick-m" type="text" inputMode="numeric" pattern="[0-9]*" placeholder="00" className="w-full bg-slate-50 border-2 border-slate-100 p-3 pb-6 rounded-2xl outline-none focus:border-blue-500 focus:bg-white transition-all text-center text-3xl font-mono font-bold placeholder:text-slate-300" onInput={e => { const t = e.target as HTMLInputElement; t.value = t.value.replace(/\D/g, '').slice(0, 2); if (t.value.length >= 2) document.getElementById('quick-s')?.focus() }} />
-                       <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">Min</span>
+                       <input id="quick-m" type="text" inputMode="numeric" pattern="[0-9]*" placeholder="00" className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 p-3 pb-6 rounded-2xl outline-none focus:border-blue-500 transition-all text-center text-3xl font-mono font-bold placeholder:text-slate-300 dark:placeholder:text-slate-600 text-slate-800 dark:text-slate-100" onInput={e => { const t = e.target as HTMLInputElement; t.value = t.value.replace(/\D/g, '').slice(0, 2); if (t.value.length >= 2) document.getElementById('quick-s')?.focus() }} />
+                       <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[11px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Min</span>
                     </div>
-                    <span className="text-2xl font-bold text-slate-300 self-center mb-6">:</span>
+                    <span className="text-2xl font-bold text-slate-300 dark:text-slate-600 self-center mb-6">:</span>
                     <div className="flex-1 relative">
-                       <input id="quick-s" type="text" inputMode="numeric" pattern="[0-9]*" placeholder="00" className="w-full bg-slate-50 border-2 border-slate-100 p-3 pb-6 rounded-2xl outline-none focus:border-blue-500 focus:bg-white transition-all text-center text-3xl font-mono font-bold placeholder:text-slate-300" onInput={e => { const t = e.target as HTMLInputElement; t.value = t.value.replace(/\D/g, '').slice(0, 2); }} />
-                       <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">Sec</span>
+                       <input id="quick-s" type="text" inputMode="numeric" pattern="[0-9]*" placeholder="00" className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 p-3 pb-6 rounded-2xl outline-none focus:border-blue-500 transition-all text-center text-3xl font-mono font-bold placeholder:text-slate-300 dark:placeholder:text-slate-600 text-slate-800 dark:text-slate-100" onInput={e => { const t = e.target as HTMLInputElement; t.value = t.value.replace(/\D/g, '').slice(0, 2); }} />
+                       <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[11px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Sec</span>
                     </div>
                  </div>
               </div>
@@ -260,13 +377,12 @@ export default function PikminDashboard() {
                   const h = parseInt((document.getElementById('quick-h') as HTMLInputElement).value) || 0;
                   const m = parseInt((document.getElementById('quick-m') as HTMLInputElement).value) || 0;
                   const s = parseInt((document.getElementById('quick-s') as HTMLInputElement).value) || 0;
-                  if (h+m+s === 0) return alert("請至少輸入一項時間！");
                   addMushroom(h, m, s, n, p);
                   setIsAdding(false);
                 }}
                 className="w-full bg-blue-600 hover:bg-blue-700 active:scale-95 text-white py-4 rounded-2xl font-bold text-lg shadow-[0_10px_20px_rgba(37,99,235,0.3)] transition-all flex items-center justify-center gap-2 mt-2"
               >
-                <Plus size={24} /> 建立追蹤
+                <Plus size={24} /> {t.startTracking}
               </button>
             </div>
           </div>
@@ -276,9 +392,10 @@ export default function PikminDashboard() {
   );
 }
 
-function MushroomItem({ m, now, isEditing, setEditingId, onDelete, onUpdate, onResetNote }: { 
+function MushroomItem({ m, now, lang, isEditing, setEditingId, onDelete, onUpdate, onResetNote }: { 
   m: Mushroom, 
   now: number, 
+  lang: Lang,
   isEditing: boolean,
   setEditingId: (id: string | null) => void,
   onDelete: (id: string) => void, 
@@ -293,6 +410,7 @@ function MushroomItem({ m, now, isEditing, setEditingId, onDelete, onUpdate, onR
   const hRef = useRef<HTMLInputElement>(null);
   const mRef = useRef<HTMLInputElement>(null);
   const sRef = useRef<HTMLInputElement>(null);
+  const t = T[lang];
 
   useEffect(() => {
     if (isEditing) {
@@ -317,7 +435,7 @@ function MushroomItem({ m, now, isEditing, setEditingId, onDelete, onUpdate, onR
     };
   };
 
-  const t = formatTime(diff);
+  const timeFmt = formatTime(diff);
 
   if (isEditing) {
     return (
@@ -327,7 +445,7 @@ function MushroomItem({ m, now, isEditing, setEditingId, onDelete, onUpdate, onR
             defaultValue={m.name} 
             onChange={e => onUpdate(m.id, { name: e.target.value })}
             className="border p-2 rounded-lg flex-1 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="蘑菇名稱"
+            placeholder={t.defaultMushroom}
           />
           <div className="flex items-center border rounded-lg px-2 gap-2 focus-within:ring-2 focus-within:ring-blue-500">
             <Users size={16} className="text-slate-400" />
@@ -341,12 +459,12 @@ function MushroomItem({ m, now, isEditing, setEditingId, onDelete, onUpdate, onR
         </div>
 
         <div className="flex flex-col gap-2 mb-4 bg-slate-50 p-3 rounded-xl border border-slate-200">
-          <div className="text-sm text-slate-500 font-bold mb-1 flex items-center gap-1"><Clock size={14} /> 重新設定剩餘時間 (選填)</div>
+          <div className="text-sm text-slate-500 font-bold mb-1 flex items-center gap-1"><Clock size={14} /> {t.resetTime}</div>
           <div className="flex gap-2 items-center">
             <input 
               ref={hRef}
               type="text" inputMode="numeric" pattern="[0-9]*" 
-              placeholder={t.h} 
+              placeholder={timeFmt.h} 
               value={editH}
               onChange={e => {
                 const val = e.target.value.replace(/\D/g, '').slice(0, 2);
@@ -359,7 +477,7 @@ function MushroomItem({ m, now, isEditing, setEditingId, onDelete, onUpdate, onR
             <input 
               ref={mRef}
               type="text" inputMode="numeric" pattern="[0-9]*" 
-              placeholder={t.m} 
+              placeholder={timeFmt.m} 
               value={editM}
               onChange={e => {
                 const val = e.target.value.replace(/\D/g, '').slice(0, 2);
@@ -372,7 +490,7 @@ function MushroomItem({ m, now, isEditing, setEditingId, onDelete, onUpdate, onR
             <input 
               ref={sRef}
               type="text" inputMode="numeric" pattern="[0-9]*" 
-              placeholder={t.s} 
+              placeholder={timeFmt.s} 
               value={editS}
               onChange={e => {
                 const val = e.target.value.replace(/\D/g, '').slice(0, 2);
@@ -401,10 +519,10 @@ function MushroomItem({ m, now, isEditing, setEditingId, onDelete, onUpdate, onR
             }}
             className="bg-blue-600 text-white px-4 py-3 rounded-xl flex-1 font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-500/30 active:scale-95 transition-transform"
           >
-            <Check size={18} /> 儲存修改
+            <Check size={18} /> {t.saveChanges}
           </button>
           <button onClick={() => setEditingId(null)} className="bg-slate-100 hover:bg-slate-200 text-slate-500 px-4 py-3 rounded-xl font-bold active:scale-95 transition-transform">
-            取消
+            {t.cancel}
           </button>
         </div>
       </div>
@@ -417,54 +535,64 @@ function MushroomItem({ m, now, isEditing, setEditingId, onDelete, onUpdate, onR
         <h3 className="text-xl font-bold flex items-center gap-2">
           {m.name}
           <span className="flex items-center gap-1 text-sm bg-white/20 px-2 py-0.5 rounded-full font-normal shadow-sm">
-            <Users size={14} /> {m.participants} 人
+            <Users size={14} /> {m.participants} {t.players}
           </span>
           {isWaitingRespawn && (
              <span className="text-xs bg-amber-500 text-white px-2 py-0.5 rounded-full font-bold animate-pulse shadow-sm">
-               重生中
+               {t.respawning}
              </span>
           )}
         </h3>
         <div className="mt-1">
           <p className={`text-xs flex items-center gap-1.5 ${isOver ? 'text-slate-500' : 'text-white/80'}`}>
             <Clock size={12} />
-            戰鬥結束：{new Date(battleEnd).toLocaleTimeString()}
+            {t.battleEnds}{new Date(battleEnd).toLocaleTimeString()}
           </p>
           <p className={`text-xs flex items-center gap-1.5 mt-0.5 ${isOver ? 'text-slate-400' : 'text-white/60'}`}>
             <RotateCcw size={12} />
-            預計重生：{new Date(m.endTime).toLocaleTimeString()}
+            {t.estRespawn}{new Date(m.endTime).toLocaleTimeString()}
           </p>
         </div>
       </div>
 
       <div className="flex items-center gap-4 w-full sm:w-auto justify-between mt-2 sm:mt-0">
         <div className="flex gap-1.5 font-mono text-3xl font-bold">
-          {isOver ? <span className="text-xl flex items-center gap-2"><Sparkles size={20}/> 重生完成</span> : (
+          {isOver ? <span className="text-xl flex items-center gap-2"><Sparkles size={20}/> {t.respawnComplete}</span> : (
             <>
               <div className="bg-black/20 px-2 py-1 rounded-lg flex flex-col items-center min-w-[50px]">
-                <span className="text-2xl">{t.h}</span>
+                <span className="text-2xl">{timeFmt.h}</span>
               </div>
               <span className="opacity-50">:</span>
               <div className="bg-black/20 px-2 py-1 rounded-lg flex flex-col items-center min-w-[50px]">
-                <span className="text-2xl">{t.m}</span>
+                <span className="text-2xl">{timeFmt.m}</span>
               </div>
               <span className="opacity-50">:</span>
               <div className="bg-black/20 px-2 py-1 rounded-lg flex flex-col items-center min-w-[50px]">
-                <span className="text-2xl">{t.s}</span>
+                <span className="text-2xl">{timeFmt.s}</span>
               </div>
             </>
           )}
         </div>
         
         <div className="flex gap-2">
-          <button onClick={() => setEditingId(m.id)} className={`p-2 rounded-full ${isOver ? 'bg-slate-300' : 'bg-black/10'}`}>
+          <button onClick={() => setEditingId(m.id)} className={`p-2 rounded-full ${isOver ? 'bg-slate-300 dark:bg-slate-700' : 'bg-black/10 hover:bg-black/20'}`}>
             <Edit3 size={18} />
           </button>
-          <button onClick={() => onDelete(m.id)} className={`p-2 rounded-full ${isOver ? 'bg-slate-300' : 'bg-black/10'}`}>
+          <button onClick={() => onDelete(m.id)} className={`p-2 rounded-full ${isOver ? 'bg-slate-300 dark:bg-slate-700' : 'bg-black/10 hover:bg-black/20'}`}>
             <Trash2 size={18} />
           </button>
         </div>
       </div>
+      
+      {/* Progress Bar */}
+      {!isOver && (
+        <div className="absolute bottom-0 left-0 h-1 bg-black/10 w-full overflow-hidden">
+          <div 
+            className="h-full bg-white/40 shadow-[0_0_8px_rgba(255,255,255,0.8)] transition-all duration-1000 ease-linear" 
+            style={{ width: `${Math.min(100, Math.max(0, ((now - (m.startTime || now)) / Math.max(1, (m.battleEndTime - (m.startTime || now)))) * 100))}%` }}
+          />
+        </div>
+      )}
     </div>
   );
 }
