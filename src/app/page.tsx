@@ -235,8 +235,8 @@ export default function PikminDashboard() {
       </header>
 
       {/* Tabs / Groups Selection */}
-      <div className="max-w-2xl mx-auto mb-6 flex items-center gap-2">
-        <div className="flex-1 overflow-x-auto no-scrollbar flex gap-2 py-2">
+      <div className="max-w-2xl mx-auto mb-6 flex items-start gap-2">
+        <div className="flex-1 flex flex-wrap gap-2 py-2">
           {groups.map(g => (
             <button
               key={g.id}
@@ -260,15 +260,16 @@ export default function PikminDashboard() {
           ))}
           <button 
             onClick={addGroup}
-            className="p-2.5 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl hover:bg-slate-300 dark:hover:bg-slate-700 transition-all flex items-center justify-center min-w-[45px] active:scale-95"
+            className="p-2.5 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl hover:bg-slate-300 dark:hover:bg-slate-700 transition-all flex items-center justify-center min-w-[45px] active:scale-95 shadow-sm"
           >
             <Plus size={20} />
           </button>
         </div>
         <button 
            onClick={() => deleteGroup(activeGroupId)}
-           className="p-2.5 bg-white dark:bg-slate-800 text-rose-500 rounded-2xl shadow-sm hover:bg-rose-50 dark:hover:bg-rose-950 transition-all active:scale-95"
+           className={`p-2.5 mt-2 rounded-2xl shadow-sm transition-all active:scale-95 ${groups.length <= 1 ? 'bg-slate-100 text-slate-300 dark:bg-slate-800/50 dark:text-slate-600 cursor-not-allowed' : 'bg-white dark:bg-slate-800 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950'}`}
            title={t.deleteTab}
+           disabled={groups.length <= 1}
         >
           <Trash2 size={20} />
         </button>
@@ -341,7 +342,7 @@ export default function PikminDashboard() {
                  <div className="flex justify-between items-center mb-2">
                    <label className="block text-sm font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1"><Clock size={16}/> {t.remainingTime}</label>
                  </div>
-                 <div className="flex gap-2 mb-4 overflow-x-auto pb-2 no-scrollbar">
+                 <div className="flex flex-wrap gap-2 mb-4 pb-2">
                    {[
                      { label: t.m15, h: 0, m: 15, s: 0 },
                      { label: t.m30, h: 0, m: 30, s: 0 },
@@ -542,7 +543,7 @@ function MushroomItem({ m, now, lang, isEditing, setEditingId, onDelete, onUpdat
   return (
     <div className={`p-5 rounded-3xl transition-all duration-300 relative overflow-hidden flex flex-col sm:flex-row justify-between items-center gap-4 ${isOver ? 'bg-slate-200 opacity-60' : `bg-gradient-to-br text-white shadow-xl -translate-y-1 ${m.color}`}`}>
       <div className="flex flex-col items-start w-full sm:w-auto">
-        <h3 className="text-xl font-bold flex items-center gap-2">
+        <h3 className="text-xl font-bold flex flex-wrap items-center gap-2">
           {m.name}
           <span className="flex items-center gap-1 text-sm bg-white/20 px-2 py-0.5 rounded-full font-normal shadow-sm">
             <Users size={14} /> {m.participants} {t.players}
@@ -556,11 +557,11 @@ function MushroomItem({ m, now, lang, isEditing, setEditingId, onDelete, onUpdat
         <div className="mt-1">
           <p className={`text-xs flex items-center gap-1.5 ${isOver ? 'text-slate-500' : 'text-white/80'}`}>
             <Clock size={12} />
-            {t.battleEnds}{new Date(battleEnd).toLocaleTimeString()}
+            {t.battleEnds}{new Date(battleEnd).toLocaleTimeString(lang === 'zh' ? 'zh-TW' : 'en-US')}
           </p>
           <p className={`text-xs flex items-center gap-1.5 mt-0.5 ${isOver ? 'text-slate-400' : 'text-white/60'}`}>
             <RotateCcw size={12} />
-            {t.estRespawn}{new Date(m.endTime).toLocaleTimeString()}
+            {t.estRespawn}{new Date(m.endTime).toLocaleTimeString(lang === 'zh' ? 'zh-TW' : 'en-US')}
           </p>
         </div>
       </div>
