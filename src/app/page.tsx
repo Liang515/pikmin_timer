@@ -113,8 +113,9 @@ export default function PikminDashboard() {
     let initialGroups: AreaGroup[] = [];
     if (savedGroups) {
       initialGroups = JSON.parse(savedGroups);
+      initialGroups.sort((a, b) => (b.lastAccessed || 0) - (a.lastAccessed || 0));
     } else {
-      initialGroups = [{ id: 'default', name: savedLang === 'en' ? 'Home' : '首頁' }];
+      initialGroups = [{ id: 'default', name: savedLang === 'en' ? 'Home' : '首頁', lastAccessed: Date.now() }];
     }
     setGroups(initialGroups);
     setActiveGroupId(initialGroups[0].id);
@@ -179,11 +180,19 @@ export default function PikminDashboard() {
     if (editingId === id) setEditingId(null);
   };
 
+  const handleSetActiveGroup = (id: string) => {
+    setActiveGroupId(id);
+    setGroups(prevGroups => {
+      const newGroups = prevGroups.map(g => g.id === id ? { ...g, lastAccessed: Date.now() } : g);
+      return newGroups.sort((a, b) => (b.lastAccessed || 0) - (a.lastAccessed || 0));
+    });
+  };
+
   const addGroup = () => {
     const name = prompt(t.enterArea, t.newArea);
     if (name) {
-      const newGroup = { id: crypto.randomUUID(), name };
-      setGroups([...groups, newGroup]);
+      const newGroup = { id: crypto.randomUUID(), name, lastAccessed: Date.now() };
+      setGroups(prev => [newGroup, ...prev]);
       setActiveGroupId(newGroup.id);
     }
   };
@@ -191,9 +200,10 @@ export default function PikminDashboard() {
   const deleteGroup = (id: string) => {
     if (groups.length <= 1) return alert(t.keepOneArea);
     if (confirm(t.confirmDeleteArea)) {
-      setGroups(groups.filter(g => g.id !== id));
+      const remaining = groups.filter(g => g.id !== id);
+      setGroups(remaining);
       setMushrooms(mushrooms.filter(m => m.groupId !== id));
-      if (activeGroupId === id) setActiveGroupId(groups[0].id);
+      if (activeGroupId === id) handleSetActiveGroup(remaining[0].id);
     }
   };
 
@@ -230,7 +240,7 @@ export default function PikminDashboard() {
           {groups.map(g => (
             <button
               key={g.id}
-              onClick={() => setActiveGroupId(g.id)}
+              onClick={() => handleSetActiveGroup(g.id)}
               onDoubleClick={() => {
                 const newName = prompt(t.renameArea, g.name);
                 if (newName) setGroups(groups.map(group => group.id === g.id ? {...group, name: newName} : group));

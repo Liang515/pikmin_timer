@@ -1,6 +1,7 @@
 export interface AreaGroup {
   id: string;
   name: string;
+  lastAccessed?: number;
 }
 
 export interface Mushroom {
