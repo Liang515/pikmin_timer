@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, ExternalLink, Trash2, RotateCcw, Clock, BellRing, Sparkles, Users, Edit3, Check, X, MapPin, Globe } from 'lucide-react';
+import { Plus, ExternalLink, Trash2, RotateCcw, Clock, BellRing, Sparkles, Users, Edit3, Check, X, MapPin, Globe, Moon, Sun } from 'lucide-react';
 import { Mushroom, AreaGroup } from '@/types/mushroom';
 
 type Lang = 'zh' | 'en';
@@ -97,6 +97,7 @@ export default function PikminDashboard() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [lang, setLang] = useState<Lang>('zh');
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const notifiedSet = useRef<Set<string>>(new Set());
 
   const t = T[lang];
@@ -105,9 +106,23 @@ export default function PikminDashboard() {
     const savedMs = localStorage.getItem('pikmin_mushrooms');
     const savedGroups = localStorage.getItem('pikmin_groups');
     const savedLang = localStorage.getItem('pikmin_lang') as Lang;
-    
+    const savedTheme = localStorage.getItem('pikmin_theme') as 'light' | 'dark' | null;
+
     if (savedLang && (savedLang === 'zh' || savedLang === 'en')) {
       setLang(savedLang);
+    }
+
+    let initialTheme: 'light' | 'dark' = 'light';
+    if (savedTheme === 'light' || savedTheme === 'dark') {
+      initialTheme = savedTheme;
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      initialTheme = 'dark';
+    }
+    setTheme(initialTheme);
+    if (initialTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
     }
 
     let initialGroups: AreaGroup[] = [];
@@ -207,6 +222,17 @@ export default function PikminDashboard() {
     }
   };
 
+  const toggleTheme = () => {
+    const nextTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(nextTheme);
+    localStorage.setItem('pikmin_theme', nextTheme);
+    if (nextTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
+
   const activeMushrooms = mushrooms.filter(m => m.groupId === activeGroupId);
   const sortedMushrooms = [...activeMushrooms].sort((a, b) => {
     const aOver = now > a.endTime;
@@ -225,6 +251,9 @@ export default function PikminDashboard() {
           </h1>
         </div>
         <div className="flex gap-1.5 sm:gap-2">
+          <button onClick={toggleTheme} className="p-2 sm:p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm text-slate-600 dark:text-slate-300 active:scale-95 transition-transform hover:shadow-md">
+            {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+          </button>
           <button onClick={() => setLang(lang === 'zh' ? 'en' : 'zh')} className="px-2.5 sm:px-3 py-2 bg-white dark:bg-slate-800 rounded-xl shadow-sm text-slate-600 dark:text-slate-300 active:scale-95 transition-transform hover:shadow-md font-bold flex items-center gap-1 sm:gap-1.5 text-sm sm:text-base">
              <Globe size={18} /> <span className="hidden sm:inline">{t.languageToggle}</span>
           </button>
