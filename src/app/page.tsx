@@ -570,11 +570,11 @@ function MushroomItem({ m, now, lang, isEditing, setEditingId, onDelete, onUpdat
   }
 
   return (
-    <div className={`p-5 rounded-3xl transition-all duration-300 relative overflow-hidden flex flex-col sm:flex-row justify-between items-center gap-4 ${isOver ? 'bg-slate-200 opacity-60' : `bg-gradient-to-br text-white shadow-xl -translate-y-1 ${m.color}`}`}>
+    <div className={`p-5 rounded-3xl transition-all duration-300 relative overflow-hidden flex flex-col sm:flex-row justify-between items-center gap-4 ${isOver ? 'bg-slate-200 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 opacity-80' : `bg-gradient-to-br text-white shadow-xl -translate-y-1 ${m.color}`}`}>
       <div className="flex flex-col items-start w-full sm:w-auto">
-        <h3 className="text-xl font-bold flex flex-wrap items-center gap-2">
+        <h3 className={`text-xl font-bold flex flex-wrap items-center gap-2 ${isOver ? 'text-slate-800 dark:text-slate-200' : 'text-white'}`}>
           {m.name}
-          <span className="flex items-center gap-1 text-sm bg-white/20 px-2 py-0.5 rounded-full font-normal shadow-sm">
+          <span className={`flex items-center gap-1 text-sm px-2 py-0.5 rounded-full font-normal shadow-sm ${isOver ? 'bg-slate-300/60 dark:bg-slate-700/60 text-slate-600 dark:text-slate-400' : 'bg-white/20 text-white'}`}>
             <Users size={14} /> {m.participants} {t.players}
           </span>
           {isWaitingRespawn && (
@@ -584,11 +584,11 @@ function MushroomItem({ m, now, lang, isEditing, setEditingId, onDelete, onUpdat
           )}
         </h3>
         <div className="mt-1">
-          <p className={`text-xs flex items-center gap-1.5 ${isOver ? 'text-slate-500' : 'text-white/80'}`}>
+          <p className={`text-xs flex items-center gap-1.5 ${isOver ? 'text-slate-600 dark:text-slate-400' : 'text-white/80'}`}>
             <Clock size={12} />
             {t.battleEnds}{new Date(battleEnd).toLocaleTimeString(lang === 'zh' ? 'zh-TW' : 'en-US')}
           </p>
-          <p className={`text-xs flex items-center gap-1.5 mt-0.5 ${isOver ? 'text-slate-400' : 'text-white/60'}`}>
+          <p className={`text-xs flex items-center gap-1.5 mt-0.5 ${isOver ? 'text-slate-500 dark:text-slate-500' : 'text-white/60'}`}>
             <RotateCcw size={12} />
             {t.estRespawn}{new Date(m.endTime).toLocaleTimeString(lang === 'zh' ? 'zh-TW' : 'en-US')}
           </p>
@@ -597,7 +597,7 @@ function MushroomItem({ m, now, lang, isEditing, setEditingId, onDelete, onUpdat
 
       <div className="flex items-center gap-4 w-full sm:w-auto justify-between mt-2 sm:mt-0">
         <div className="flex gap-1 sm:gap-1.5 font-mono text-2xl sm:text-3xl font-bold">
-          {isOver ? <span className="text-lg sm:text-xl flex items-center gap-2"><Sparkles size={20}/> {t.respawnComplete}</span> : (
+          {isOver ? <span className="text-lg sm:text-xl flex items-center gap-2 text-slate-600 dark:text-slate-300"><Sparkles size={20}/> {t.respawnComplete}</span> : (
             <>
               <div className="bg-black/20 px-1.5 sm:px-2 py-1 rounded-lg flex flex-col items-center min-w-[40px] sm:min-w-[50px]">
                 <span className="text-xl sm:text-2xl">{timeFmt.h}</span>
