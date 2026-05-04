@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, ExternalLink, Trash2, RotateCcw, Clock, BellRing, Sparkles, Users, Edit3, Check, X, MapPin, Globe, Moon, Sun } from 'lucide-react';
+import { Plus, Minus, ExternalLink, Trash2, RotateCcw, Clock, BellRing, Sparkles, Users, Edit3, Check, X, MapPin, Globe, Moon, Sun, ChevronUp, ChevronDown } from 'lucide-react';
 import { Mushroom, AreaGroup } from '@/types/mushroom';
 
 type Lang = 'zh' | 'en';
@@ -81,6 +81,243 @@ const T = {
   }
 };
 
+/* ─── Scroll Wheel Picker Column ─── */
+const ITEM_HEIGHT = 44;
+const VISIBLE_ITEMS = 5;
+const HALF = Math.floor(VISIBLE_ITEMS / 2);
+
+function WheelColumn({ value, max, label, onChange }: {
+  value: number;
+  max: number;
+  label: string;
+  onChange: (v: number) => void;
+}) {
+  const [offset, setOffset] = useState(0);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editText, setEditText] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+  const dragStart = useRef<{ y: number; startValue: number } | null>(null);
+
+  const handleStart = (clientY: number) => {
+    if (isEditing) return;
+    dragStart.current = { y: clientY, startValue: value };
+    setOffset(0);
+  };
+
+  const handleMove = (clientY: number) => {
+    if (!dragStart.current || isEditing) return;
+    const dy = dragStart.current.y - clientY;
+    setOffset(dy);
+  };
+
+  const handleEnd = () => {
+    if (!dragStart.current) return;
+    const itemsMoved = Math.round(offset / ITEM_HEIGHT);
+    const newValue = Math.max(0, Math.min(max - 1, dragStart.current.startValue + itemsMoved));
+    dragStart.current = null;
+    setOffset(0);
+    onChange(newValue);
+  };
+
+  const nudge = (dir: 1 | -1) => {
+    const next = Math.max(0, Math.min(max - 1, value + dir));
+    onChange(next);
+  };
+
+  // Mouse wheel support for desktop
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    const dir = e.deltaY > 0 ? 1 : -1;
+    nudge(dir);
+  };
+
+  // Double-click to edit inline
+  const startEdit = () => {
+    setIsEditing(true);
+    setEditText(value.toString());
+    setTimeout(() => inputRef.current?.select(), 0);
+  };
+
+  const commitEdit = () => {
+    const parsed = parseInt(editText);
+    if (!isNaN(parsed)) {
+      onChange(Math.max(0, Math.min(max - 1, parsed)));
+    }
+    setIsEditing(false);
+  };
+
+  const dragItems = Math.round(offset / ITEM_HEIGHT);
+  const centerValue = Math.max(0, Math.min(max - 1, value + dragItems));
+  const fractionalOffset = offset - dragItems * ITEM_HEIGHT;
+
+  const visibleIndices: number[] = [];
+  for (let i = centerValue - HALF; i <= centerValue + HALF; i++) {
+    visibleIndices.push(i);
+  }
+
+  return (
+    <div className="flex flex-col items-center gap-1 select-none">
+      <button
+        type="button"
+        onClick={() => nudge(-1)}
+        className="p-1 rounded-lg text-slate-400 dark:text-slate-500 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 active:scale-90 transition-all"
+        aria-label={`Decrease ${label}`}
+      >
+        <ChevronUp size={20} />
+      </button>
+
+      <div
+        className="relative overflow-hidden cursor-grab active:cursor-grabbing"
+        style={{ height: ITEM_HEIGHT * VISIBLE_ITEMS, width: 72 }}
+        onMouseDown={e => { e.preventDefault(); handleStart(e.clientY); }}
+        onMouseMove={e => { if (dragStart.current) handleMove(e.clientY); }}
+        onMouseUp={handleEnd}
+        onMouseLeave={() => { if (dragStart.current) handleEnd(); }}
+        onTouchStart={e => handleStart(e.touches[0].clientY)}
+        onTouchMove={e => { e.preventDefault(); handleMove(e.touches[0].clientY); }}
+        onTouchEnd={handleEnd}
+        onWheel={handleWheel}
+      >
+        {/* Highlight band */}
+        <div
+          className="absolute left-0 right-0 pointer-events-none z-10 border-y-2 border-blue-500/40 dark:border-blue-400/40 bg-blue-50/60 dark:bg-blue-900/20 rounded-lg"
+          style={{ top: ITEM_HEIGHT * HALF, height: ITEM_HEIGHT }}
+        />
+        {/* Fade top & bottom */}
+        <div className="absolute top-0 left-0 right-0 h-14 bg-gradient-to-b from-white dark:from-slate-900 to-transparent pointer-events-none z-20" />
+        <div className="absolute bottom-0 left-0 right-0 h-14 bg-gradient-to-t from-white dark:from-slate-900 to-transparent pointer-events-none z-20" />
+
+        {/* Items */}
+        <div
+          className="absolute left-0 right-0 transition-transform"
+          style={{
+            transform: `translateY(${-fractionalOffset}px)`,
+            transitionDuration: dragStart.current ? '0ms' : '200ms',
+          }}
+        >
+          {visibleIndices.map((i, idx) => {
+            const isCenter = idx === HALF;
+            const isValid = i >= 0 && i < max;
+
+            // Center item: show inline input when editing
+            if (isCenter && isEditing) {
+              return (
+                <div key={idx} className="flex items-center justify-center" style={{ height: ITEM_HEIGHT }}>
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    inputMode="numeric"
+                    value={editText}
+                    onChange={e => setEditText(e.target.value.replace(/\D/g, '').slice(0, 2))}
+                    onBlur={commitEdit}
+                    onKeyDown={e => { if (e.key === 'Enter') commitEdit(); if (e.key === 'Escape') setIsEditing(false); }}
+                    className="w-14 text-center text-2xl font-mono font-bold bg-white dark:bg-slate-800 border-2 border-blue-500 rounded-lg outline-none text-blue-600 dark:text-blue-400 z-30 relative"
+                    style={{ height: ITEM_HEIGHT - 4 }}
+                    autoFocus
+                  />
+                </div>
+              );
+            }
+
+            return (
+              <div
+                key={idx}
+                onClick={() => { if (isValid && !dragStart.current) { if (isCenter) startEdit(); else onChange(i); } }}
+                className={`flex items-center justify-center font-mono font-bold leading-none overflow-hidden ${
+                  !isValid ? 'opacity-0' :
+                  isCenter && !dragStart.current
+                    ? 'text-blue-600 dark:text-blue-400 text-2xl cursor-text'
+                    : 'text-slate-400 dark:text-slate-500 text-lg cursor-pointer'
+                }`}
+                style={{ height: ITEM_HEIGHT }}
+                title={isCenter ? (label === 'Hrs' ? '點擊輸入' : 'Click to type') : ''}
+              >
+                {isValid ? i.toString().padStart(2, '0') : ''}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => nudge(1)}
+        className="p-1 rounded-lg text-slate-400 dark:text-slate-500 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 active:scale-90 transition-all"
+        aria-label={`Increase ${label}`}
+      >
+        <ChevronDown size={20} />
+      </button>
+      <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-300 uppercase tracking-widest -mt-1">{label}</span>
+    </div>
+  );
+}
+
+/* ─── ScrollTimePicker ─── */
+function ScrollTimePicker({ h, m, s, onChangeH, onChangeM, onChangeS }: {
+  h: number; m: number; s: number;
+  onChangeH: (v: number) => void;
+  onChangeM: (v: number) => void;
+  onChangeS: (v: number) => void;
+}) {
+  return (
+    <div className="flex items-center justify-center gap-1 py-2">
+      <WheelColumn value={h} max={24} label="Hrs" onChange={onChangeH} />
+      <span className="text-2xl font-bold text-slate-300 dark:text-slate-600 mb-8">:</span>
+      <WheelColumn value={m} max={60} label="Min" onChange={onChangeM} />
+      <span className="text-2xl font-bold text-slate-300 dark:text-slate-600 mb-8">:</span>
+      <WheelColumn value={s} max={60} label="Sec" onChange={onChangeS} />
+    </div>
+  );
+}
+
+/* ─── Participant Slider ─── */
+function ParticipantSlider({ value, onChange }: {
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  const clamp = (v: number) => Math.max(1, Math.min(30, v));
+  return (
+    <div className="flex items-center gap-3">
+      <button
+        type="button"
+        onClick={() => onChange(clamp(value - 1))}
+        disabled={value <= 1}
+        className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-90 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+      >
+        <Minus size={18} />
+      </button>
+      <div className="flex-1 flex flex-col gap-1.5">
+        <div className="flex items-center justify-center">
+          <Users size={16} className="text-blue-500 dark:text-blue-400 mr-1.5" />
+          <span className="text-2xl font-extrabold text-blue-600 dark:text-blue-400 tabular-nums min-w-[2ch] text-center">{value}</span>
+        </div>
+        <input
+          type="range"
+          min={1}
+          max={30}
+          value={value}
+          onChange={e => onChange(parseInt(e.target.value))}
+          className="participant-slider w-full h-2 rounded-full appearance-none cursor-pointer bg-slate-200 dark:bg-slate-700 accent-blue-600"
+        />
+        <div className="flex justify-between text-[10px] font-bold text-slate-400 dark:text-slate-500 px-0.5">
+          <span>1</span>
+          <span>10</span>
+          <span>20</span>
+          <span>30</span>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={() => onChange(clamp(value + 1))}
+        disabled={value >= 30}
+        className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-90 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+      >
+        <Plus size={18} />
+      </button>
+    </div>
+  );
+}
+
 const COLORS = [
   'from-blue-400 to-indigo-500 shadow-blue-500/30',
   'from-purple-400 to-fuchsia-500 shadow-purple-500/30',
@@ -96,6 +333,10 @@ export default function PikminDashboard() {
   const [now, setNow] = useState(Date.now());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
+  const [addH, setAddH] = useState(0);
+  const [addM, setAddM] = useState(0);
+  const [addS, setAddS] = useState(0);
+  const [addP, setAddP] = useState(5);
   const [lang, setLang] = useState<Lang>('zh');
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const notifiedSet = useRef<Set<string>>(new Set());
@@ -361,17 +602,14 @@ export default function PikminDashboard() {
               
               <div>
                  <label className="block text-sm font-bold text-slate-600 dark:text-slate-300 mb-2">{t.participants}</label>
-                 <div className="flex items-center bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-2xl px-4 py-3 focus-within:border-blue-500 dark:focus-within:border-blue-500 transition-all">
-                   <Users size={20} className="text-slate-400 dark:text-slate-500 mr-2" />
-                   <input id="quick-p" type="number" defaultValue="5" min="1" className="w-full bg-transparent outline-none font-bold text-xl text-slate-800 dark:text-slate-100" />
-                 </div>
+                 <ParticipantSlider value={addP} onChange={setAddP} />
               </div>
 
               <div>
                  <div className="flex justify-between items-center mb-2">
                    <label className="block text-sm font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1"><Clock size={16}/> {t.remainingTime}</label>
                  </div>
-                 <div className="flex flex-wrap gap-2 mb-4 pb-2">
+                 <div className="flex flex-wrap gap-2 mb-3">
                    {[
                      { label: t.m15, h: 0, m: 15, s: 0 },
                      { label: t.m30, h: 0, m: 30, s: 0 },
@@ -382,60 +620,40 @@ export default function PikminDashboard() {
                      <button 
                        key={p.label}
                        onClick={() => {
-                          (document.getElementById('quick-h') as HTMLInputElement).value = p.h.toString().padStart(2, '0');
-                          (document.getElementById('quick-m') as HTMLInputElement).value = p.m.toString().padStart(2, '0');
-                          (document.getElementById('quick-s') as HTMLInputElement).value = p.s.toString().padStart(2, '0');
+                          setAddH(p.h);
+                          setAddM(p.m);
+                          setAddS(p.s);
                        }}
-                       className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg text-sm font-bold whitespace-nowrap hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 transition-all"
+                       className={`px-3 py-1.5 rounded-lg text-sm font-bold whitespace-nowrap active:scale-95 transition-all ${
+                         addH === p.h && addM === p.m && addS === p.s
+                           ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30'
+                           : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                       }`}
                      >
                        {p.label}
                      </button>
                    ))}
                  </div>
-                 <div className="flex gap-2">
-                    <div className="flex-1 relative">
-                       <input id="quick-h" type="text" inputMode="numeric" pattern="[0-9]*" placeholder="00" className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 p-2 sm:p-3 pb-5 sm:pb-6 rounded-2xl outline-none focus:border-blue-500 transition-all text-center text-2xl sm:text-3xl font-mono font-bold placeholder:text-slate-400 dark:placeholder:text-slate-200 text-slate-800 dark:text-slate-100" onInput={e => { const t = e.target as HTMLInputElement; t.value = t.value.replace(/\D/g, '').slice(0, 2); if (t.value.length >= 2) document.getElementById('quick-m')?.focus() }} />
-                       <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[10px] font-extrabold text-slate-400 dark:text-slate-300 uppercase tracking-widest">Hrs</span>
-                    </div>
-                    <span className="text-2xl sm:text-3xl font-bold text-slate-300 dark:text-slate-600 self-center mb-5 sm:mb-6">:</span>
-                    <div className="flex-1 relative">
-                       <input id="quick-m" type="text" inputMode="numeric" pattern="[0-9]*" placeholder="00" className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 p-2 sm:p-3 pb-5 sm:pb-6 rounded-2xl outline-none focus:border-blue-500 transition-all text-center text-2xl sm:text-3xl font-mono font-bold placeholder:text-slate-400 dark:placeholder:text-slate-200 text-slate-800 dark:text-slate-100" onInput={e => { const t = e.target as HTMLInputElement; t.value = t.value.replace(/\D/g, '').slice(0, 2); if (t.value.length >= 2) document.getElementById('quick-s')?.focus() }} />
-                       <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[10px] font-extrabold text-slate-400 dark:text-slate-300 uppercase tracking-widest">Min</span>
-                    </div>
-                    <span className="text-2xl sm:text-3xl font-bold text-slate-300 dark:text-slate-600 self-center mb-5 sm:mb-6">:</span>
-                    <div className="flex-1 relative">
-                       <input 
-                         id="quick-s" 
-                         type="text" inputMode="numeric" pattern="[0-9]*" placeholder="00" 
-                         className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 p-2 sm:p-3 pb-5 sm:pb-6 rounded-2xl outline-none focus:border-blue-500 transition-all text-center text-2xl sm:text-3xl font-mono font-bold placeholder:text-slate-400 dark:placeholder:text-slate-200 text-slate-800 dark:text-slate-100" 
-                         onInput={e => { const t = e.target as HTMLInputElement; t.value = t.value.replace(/\D/g, '').slice(0, 2); }}
-                         onKeyDown={e => {
-                           if (e.key === 'Tab' && !e.shiftKey) {
-                             e.preventDefault();
-                             document.getElementById('start-tracking-btn')?.focus();
-                           }
-                         }}
-                       />
-                       <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[10px] font-extrabold text-slate-400 dark:text-slate-300 uppercase tracking-widest">Sec</span>
-                    </div>
-                 </div>
-              </div>
+                 <ScrollTimePicker
+                   h={addH} m={addM} s={addS}
+                   onChangeH={setAddH} onChangeM={setAddM} onChangeS={setAddS}
+                 />
+               </div>
 
-              <button 
-                id="start-tracking-btn"
-                onClick={() => {
-                  const n = (document.getElementById('quick-name') as HTMLInputElement).value;
-                  const p = parseInt((document.getElementById('quick-p') as HTMLInputElement).value) || 5;
-                  const h = parseInt((document.getElementById('quick-h') as HTMLInputElement).value) || 0;
-                  const m = parseInt((document.getElementById('quick-m') as HTMLInputElement).value) || 0;
-                  const s = parseInt((document.getElementById('quick-s') as HTMLInputElement).value) || 0;
-                  addMushroom(h, m, s, n, p);
-                  setIsAdding(false);
-                }}
-                className="w-full bg-blue-600 hover:bg-blue-700 active:scale-95 text-white py-4 rounded-2xl font-bold text-lg shadow-[0_10px_20px_rgba(37,99,235,0.3)] transition-all flex items-center justify-center gap-2 mt-2 focus:outline-none focus:ring-4 focus:ring-blue-500/50"
-              >
-                <Plus size={24} /> {t.startTracking}
-              </button>
+               <button 
+                 id="start-tracking-btn"
+                 onClick={() => {
+                   const n = (document.getElementById('quick-name') as HTMLInputElement).value;
+                   addMushroom(addH, addM, addS, n, addP);
+                   setIsAdding(false);
+                   setAddH(0); setAddM(0); setAddS(0); setAddP(5);
+                   setAddH(0); setAddM(0); setAddS(0);
+                 }}
+                 className="w-full bg-blue-600 hover:bg-blue-700 active:scale-95 text-white py-4 rounded-2xl font-bold text-lg shadow-[0_10px_20px_rgba(37,99,235,0.3)] transition-all flex items-center justify-center gap-2 mt-2 focus:outline-none focus:ring-4 focus:ring-blue-500/50"
+               >
+                 <Plus size={24} /> {t.startTracking}
+               </button>
+
             </div>
           </div>
         </div>
@@ -455,23 +673,25 @@ function MushroomItem({ m, now, lang, isEditing, setEditingId, onDelete, onUpdat
   onResetNote: () => void
 }) {
   const [editP, setEditP] = useState(m.participants);
-  const [editH, setEditH] = useState("");
-  const [editM, setEditM] = useState("");
-  const [editS, setEditS] = useState("");
+  const [editH, setEditH] = useState(0);
+  const [editM, setEditM] = useState(0);
+  const [editS, setEditS] = useState(0);
+  const [editTimeChanged, setEditTimeChanged] = useState(false);
   
-  const hRef = useRef<HTMLInputElement>(null);
-  const mRef = useRef<HTMLInputElement>(null);
-  const sRef = useRef<HTMLInputElement>(null);
   const t = T[lang];
 
   useEffect(() => {
     if (isEditing) {
       setEditP(m.participants);
-      setEditH("");
-      setEditM("");
-      setEditS("");
+      // Pre-fill with current remaining time
+      const remaining = Math.max(0, m.battleEndTime - Date.now());
+      const totalSec = Math.floor(remaining / 1000);
+      setEditH(Math.floor(totalSec / 3600));
+      setEditM(Math.floor((totalSec % 3600) / 60));
+      setEditS(totalSec % 60);
+      setEditTimeChanged(false);
     }
-  }, [isEditing, m.participants]);
+  }, [isEditing, m.participants, m.battleEndTime]);
 
   const diff = m.endTime - now;
   const isOver = diff <= 0;
@@ -492,71 +712,24 @@ function MushroomItem({ m, now, lang, isEditing, setEditingId, onDelete, onUpdat
   if (isEditing) {
     return (
       <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-3xl shadow-sm border-2 border-blue-500 transition-all text-slate-800 dark:text-slate-100">
-        <div className="flex gap-2 mb-3">
+        <div className="mb-3">
           <input 
             defaultValue={m.name} 
             onChange={e => onUpdate(m.id, { name: e.target.value })}
-            className="border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2 rounded-lg flex-1 font-bold text-slate-700 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base placeholder:text-slate-400 dark:placeholder:text-slate-500"
+            className="border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2 rounded-lg w-full font-bold text-slate-700 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base placeholder:text-slate-400 dark:placeholder:text-slate-500 mb-3"
             placeholder={t.defaultMushroom}
           />
-          <div className="flex items-center border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg px-2 gap-1 sm:gap-2 focus-within:ring-2 focus-within:ring-blue-500">
-            <Users size={16} className="text-slate-400 dark:text-slate-500" />
-            <input 
-              type="number" 
-              value={editP} 
-              onChange={e => setEditP(parseInt(e.target.value) || 5)}
-              className="w-8 sm:w-10 outline-none font-bold text-slate-700 dark:text-slate-100 bg-transparent text-center text-sm sm:text-base"
-            />
-          </div>
+          <ParticipantSlider value={editP} onChange={setEditP} />
         </div>
 
         <div className="flex flex-col gap-2 mb-4 bg-slate-50 dark:bg-slate-800/50 p-2.5 sm:p-3 rounded-xl border border-slate-200 dark:border-slate-700">
           <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-bold mb-1 flex items-center gap-1"><Clock size={14} /> {t.resetTime}</div>
-          <div className="flex gap-1.5 sm:gap-2 items-center">
-            <input 
-              ref={hRef}
-              type="text" inputMode="numeric" pattern="[0-9]*" 
-              placeholder={timeFmt.h} 
-              value={editH}
-              onChange={e => {
-                const val = e.target.value.replace(/\D/g, '').slice(0, 2);
-                setEditH(val);
-                if (val.length === 2 && mRef.current) mRef.current.focus();
-              }}
-              className="w-full text-center p-1.5 sm:p-2 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 font-mono text-base sm:text-lg font-bold bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
-            />
-            <span className="font-bold text-slate-400 dark:text-slate-600">:</span>
-            <input 
-              ref={mRef}
-              type="text" inputMode="numeric" pattern="[0-9]*" 
-              placeholder={timeFmt.m} 
-              value={editM}
-              onChange={e => {
-                const val = e.target.value.replace(/\D/g, '').slice(0, 2);
-                setEditM(val);
-                if (val.length === 2 && sRef.current) sRef.current.focus();
-              }}
-              className="w-full text-center p-1.5 sm:p-2 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 font-mono text-base sm:text-lg font-bold bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
-            />
-            <span className="font-bold text-slate-400 dark:text-slate-600">:</span>
-            <input 
-              ref={sRef}
-              type="text" inputMode="numeric" pattern="[0-9]*" 
-              placeholder={timeFmt.s} 
-              value={editS}
-              onChange={e => {
-                const val = e.target.value.replace(/\D/g, '').slice(0, 2);
-                setEditS(val);
-              }}
-              onKeyDown={e => {
-                if (e.key === 'Tab' && !e.shiftKey) {
-                  e.preventDefault();
-                  document.getElementById(`save-edit-btn-${m.id}`)?.focus();
-                }
-              }}
-              className="w-full text-center p-1.5 sm:p-2 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 font-mono text-base sm:text-lg font-bold bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
-            />
-          </div>
+          <ScrollTimePicker
+            h={editH} m={editM} s={editS}
+            onChangeH={v => { setEditH(v); setEditTimeChanged(true); }}
+            onChangeM={v => { setEditM(v); setEditTimeChanged(true); }}
+            onChangeS={v => { setEditS(v); setEditTimeChanged(true); }}
+          />
         </div>
 
         <div className="flex gap-2">
@@ -564,11 +737,8 @@ function MushroomItem({ m, now, lang, isEditing, setEditingId, onDelete, onUpdat
             id={`save-edit-btn-${m.id}`}
             onClick={() => {
               const updates: Partial<Mushroom> = { participants: editP };
-              if (editH || editM || editS) {
-                 const h = parseInt(editH) || 0;
-                 const min = parseInt(editM) || 0;
-                 const sec = parseInt(editS) || 0;
-                 const battleMs = (h*3600 + min*60 + sec)*1000;
+              if (editTimeChanged) {
+                 const battleMs = (editH*3600 + editM*60 + editS)*1000;
                  updates.battleEndTime = Date.now() + battleMs;
                  updates.endTime = updates.battleEndTime + 5 * 60 * 1000;
                  onResetNote();

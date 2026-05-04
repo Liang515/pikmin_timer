@@ -23,3 +23,43 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Hide scrollbar but keep scroll functionality for wheel pickers */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Custom range slider for participant count */
+.participant-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #2563eb;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+  border: 3px solid white;
+  transition: transform 0.15s ease;
+}
+.participant-slider::-webkit-slider-thumb:active {
+  transform: scale(1.2);
+}
+.participant-slider::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #2563eb;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+  border: 3px solid white;
+}
+.dark .participant-slider::-webkit-slider-thumb {
+  border-color: #1e293b;
+}
+.dark .participant-slider::-moz-range-thumb {
+  border-color: #1e293b;
+}
