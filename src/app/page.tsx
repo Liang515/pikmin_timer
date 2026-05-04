@@ -96,8 +96,9 @@ function WheelColumn({ value, max, label, onChange }: {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
-  const dragStart = useRef<{ y: number; startValue: number } | null>(null);
+  const dragStart = useRef<{ y: number; startValue: number; lastY: number; lastTime: number; velocity: number } | null>(null);
   const wheelRef = useRef<HTMLDivElement>(null);
+  const animFrame = useRef<number | null>(null);
 
   useEffect(() => {
     const el = wheelRef.current;
@@ -115,23 +116,67 @@ function WheelColumn({ value, max, label, onChange }: {
 
   const handleStart = (clientY: number) => {
     if (isEditing) return;
-    dragStart.current = { y: clientY, startValue: value };
+    if (animFrame.current) {
+      cancelAnimationFrame(animFrame.current);
+      animFrame.current = null;
+    }
+    dragStart.current = {
+      y: clientY,
+      startValue: value,
+      lastY: clientY,
+      lastTime: performance.now(),
+      velocity: 0,
+    };
     setOffset(0);
   };
 
   const handleMove = (clientY: number) => {
     if (!dragStart.current || isEditing) return;
+    const now = performance.now();
+    const dt = now - dragStart.current.lastTime;
     const dy = dragStart.current.y - clientY;
+
+    if (dt > 0) {
+      dragStart.current.velocity = -(clientY - dragStart.current.lastY) / dt;
+    }
+    dragStart.current.lastY = clientY;
+    dragStart.current.lastTime = now;
     setOffset(dy);
   };
 
   const handleEnd = () => {
     if (!dragStart.current) return;
-    const itemsMoved = Math.round(offset / ITEM_HEIGHT);
-    const newValue = Math.max(0, Math.min(max - 1, dragStart.current.startValue + itemsMoved));
+    const currentOffset = offset;
+    const v = dragStart.current.velocity || 0;
+    const startVal = dragStart.current.startValue;
     dragStart.current = null;
-    setOffset(0);
-    onChange(newValue);
+
+    const inertiaDistance = v * 150;
+    const finalOffset = currentOffset + inertiaDistance;
+    const itemsMoved = Math.round(finalOffset / ITEM_HEIGHT);
+    const newValue = Math.max(0, Math.min(max - 1, startVal + itemsMoved));
+    const targetOffset = (newValue - startVal) * ITEM_HEIGHT;
+
+    const startTime = performance.now();
+    const duration = Math.min(500, Math.max(150, Math.abs(targetOffset - currentOffset) * 2));
+
+    const animateSnap = (nowTime: number) => {
+      const elapsed = nowTime - startTime;
+      const progress = Math.min(1, elapsed / duration);
+      const ease = 1 - Math.pow(1 - progress, 3);
+      const current = currentOffset + (targetOffset - currentOffset) * ease;
+      setOffset(current);
+
+      if (progress < 1) {
+        animFrame.current = requestAnimationFrame(animateSnap);
+      } else {
+        animFrame.current = null;
+        setOffset(0);
+        onChange(newValue);
+      }
+    };
+
+    animFrame.current = requestAnimationFrame(animateSnap);
   };
 
   const nudge = (dir: 1 | -1) => {
@@ -208,7 +253,7 @@ function WheelColumn({ value, max, label, onChange }: {
           className="absolute left-0 right-0 transition-transform"
           style={{
             transform: `translateY(${-fractionalOffset}px)`,
-            transitionDuration: dragStart.current ? '0ms' : '200ms',
+            transitionDuration: (dragStart.current || animFrame.current) ? '0ms' : '200ms',
           }}
         >
           {visibleIndices.map((i, idx) => {
