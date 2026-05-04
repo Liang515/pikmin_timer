@@ -99,6 +99,7 @@ function WheelColumn({ value, max, label, onChange }: {
   const dragStart = useRef<{ y: number; startValue: number; lastY: number; lastTime: number; velocity: number } | null>(null);
   const wheelRef = useRef<HTMLDivElement>(null);
   const animFrame = useRef<number | null>(null);
+  const animTarget = useRef<number | null>(null);
 
   useEffect(() => {
     const el = wheelRef.current;
@@ -116,13 +117,20 @@ function WheelColumn({ value, max, label, onChange }: {
 
   const handleStart = (clientY: number) => {
     if (isEditing) return;
+    // If an animation is in progress, commit its target immediately
+    let baseValue = value;
     if (animFrame.current) {
       cancelAnimationFrame(animFrame.current);
       animFrame.current = null;
+      if (animTarget.current !== null) {
+        baseValue = animTarget.current;
+        onChange(baseValue);
+      }
     }
+    animTarget.current = null;
     dragStart.current = {
       y: clientY,
-      startValue: value,
+      startValue: baseValue,
       lastY: clientY,
       lastTime: performance.now(),
       velocity: 0,
@@ -137,7 +145,9 @@ function WheelColumn({ value, max, label, onChange }: {
     const dy = dragStart.current.y - clientY;
 
     if (dt > 0) {
-      dragStart.current.velocity = -(clientY - dragStart.current.lastY) / dt;
+      // Blend velocity for smoother tracking
+      const instantV = -(clientY - dragStart.current.lastY) / dt;
+      dragStart.current.velocity = dragStart.current.velocity * 0.3 + instantV * 0.7;
     }
     dragStart.current.lastY = clientY;
     dragStart.current.lastTime = now;
@@ -151,19 +161,23 @@ function WheelColumn({ value, max, label, onChange }: {
     const startVal = dragStart.current.startValue;
     dragStart.current = null;
 
-    const inertiaDistance = v * 150;
+    // Stronger inertia for iOS-like feel
+    const inertiaDistance = v * 350;
     const finalOffset = currentOffset + inertiaDistance;
     const itemsMoved = Math.round(finalOffset / ITEM_HEIGHT);
     const newValue = Math.max(0, Math.min(max - 1, startVal + itemsMoved));
     const targetOffset = (newValue - startVal) * ITEM_HEIGHT;
+    animTarget.current = newValue;
 
     const startTime = performance.now();
-    const duration = Math.min(500, Math.max(150, Math.abs(targetOffset - currentOffset) * 2));
+    const travel = Math.abs(targetOffset - currentOffset);
+    const duration = Math.min(800, Math.max(180, travel * 2.5));
 
     const animateSnap = (nowTime: number) => {
       const elapsed = nowTime - startTime;
       const progress = Math.min(1, elapsed / duration);
-      const ease = 1 - Math.pow(1 - progress, 3);
+      // Ease-out quart for snappier deceleration
+      const ease = 1 - Math.pow(1 - progress, 4);
       const current = currentOffset + (targetOffset - currentOffset) * ease;
       setOffset(current);
 
@@ -171,6 +185,7 @@ function WheelColumn({ value, max, label, onChange }: {
         animFrame.current = requestAnimationFrame(animateSnap);
       } else {
         animFrame.current = null;
+        animTarget.current = null;
         setOffset(0);
         onChange(newValue);
       }
