@@ -97,6 +97,21 @@ function WheelColumn({ value, max, label, onChange }: {
   const [editText, setEditText] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const dragStart = useRef<{ y: number; startValue: number } | null>(null);
+  const wheelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = wheelRef.current;
+    if (!el) return;
+
+    const handleTouchMoveNative = (e: TouchEvent) => {
+      e.preventDefault();
+    };
+
+    el.addEventListener('touchmove', handleTouchMoveNative, { passive: false });
+    return () => {
+      el.removeEventListener('touchmove', handleTouchMoveNative);
+    };
+  }, []);
 
   const handleStart = (clientY: number) => {
     if (isEditing) return;
@@ -167,8 +182,9 @@ function WheelColumn({ value, max, label, onChange }: {
       </button>
 
       <div
+        ref={wheelRef}
         className="relative overflow-hidden cursor-grab active:cursor-grabbing"
-        style={{ height: ITEM_HEIGHT * VISIBLE_ITEMS, width: 72 }}
+        style={{ height: ITEM_HEIGHT * VISIBLE_ITEMS, width: 72, touchAction: 'none' }}
         onMouseDown={e => { e.preventDefault(); handleStart(e.clientY); }}
         onMouseMove={e => { if (dragStart.current) handleMove(e.clientY); }}
         onMouseUp={handleEnd}
