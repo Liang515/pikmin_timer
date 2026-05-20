@@ -83,7 +83,7 @@ const T = {
 
 /* ─── Scroll Wheel Picker Column ─── */
 const ITEM_HEIGHT = 44;
-const VISIBLE_ITEMS = 5;
+const VISIBLE_ITEMS = 3;
 const HALF = Math.floor(VISIBLE_ITEMS / 2);
 
 function WheelColumn({ value, max, label, onChange }: {
@@ -160,6 +160,13 @@ function WheelColumn({ value, max, label, onChange }: {
     const v = dragStart.current.velocity || 0;
     const startVal = dragStart.current.startValue;
     dragStart.current = null;
+
+    // Intercept pure-tap gestures to bypass snap animations (fixing click bounce-back bug)
+    if (Math.abs(currentOffset) < 2 && Math.abs(v) < 0.01) {
+      setOffset(0);
+      animTarget.current = null;
+      return;
+    }
 
     // Stronger inertia for iOS-like feel
     const inertiaDistance = v * 350;
@@ -260,8 +267,8 @@ function WheelColumn({ value, max, label, onChange }: {
           style={{ top: ITEM_HEIGHT * HALF, height: ITEM_HEIGHT }}
         />
         {/* Fade top & bottom */}
-        <div className="absolute top-0 left-0 right-0 h-14 bg-gradient-to-b from-white dark:from-slate-900 to-transparent pointer-events-none z-20" />
-        <div className="absolute bottom-0 left-0 right-0 h-14 bg-gradient-to-t from-white dark:from-slate-900 to-transparent pointer-events-none z-20" />
+        <div className="absolute top-0 left-0 right-0 h-10 bg-gradient-to-b from-white dark:from-slate-900 to-transparent pointer-events-none z-20" />
+        <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-white dark:from-slate-900 to-transparent pointer-events-none z-20" />
 
         {/* Items */}
         <div
@@ -415,6 +422,15 @@ export default function PikminDashboard() {
   const [addP, setAddP] = useState(5);
   const [lang, setLang] = useState<Lang>('zh');
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  
+  // Compact inline area editing states
+  const [isAddingGroup, setIsAddingGroup] = useState(false);
+  const [newGroupName, setNewGroupName] = useState("");
+  const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
+  const [editGroupName, setEditGroupName] = useState("");
+  const [deleteConfirmGroupId, setDeleteConfirmGroupId] = useState<string | null>(null);
+  const [warningMessage, setWarningMessage] = useState("");
+
   const notifiedSet = useRef<Set<string>>(new Set());
 
   const t = T[lang];
@@ -520,22 +536,68 @@ export default function PikminDashboard() {
     });
   };
 
-  const addGroup = () => {
-    const name = prompt(t.enterArea, t.newArea);
-    if (name) {
-      const newGroup = { id: crypto.randomUUID(), name, lastAccessed: Date.now() };
-      setGroups(prev => [newGroup, ...prev]);
-      setActiveGroupId(newGroup.id);
+  // Warning auto-dismiss effect
+  useEffect(() => {
+    if (warningMessage) {
+      const timer = setTimeout(() => setWarningMessage(""), 3000);
+      return () => clearTimeout(timer);
     }
+  }, [warningMessage]);
+
+  const startAddGroup = () => {
+    setIsAddingGroup(true);
+    setNewGroupName("");
+    setDeleteConfirmGroupId(null);
   };
 
-  const deleteGroup = (id: string) => {
-    if (groups.length <= 1) return alert(t.keepOneArea);
-    if (confirm(t.confirmDeleteArea)) {
-      const remaining = groups.filter(g => g.id !== id);
-      setGroups(remaining);
-      setMushrooms(mushrooms.filter(m => m.groupId !== id));
-      if (activeGroupId === id) handleSetActiveGroup(remaining[0].id);
+  const commitAddGroup = () => {
+    const trimmed = newGroupName.trim();
+    if (!trimmed) {
+      setIsAddingGroup(false);
+      return;
+    }
+    const newGroup = { id: crypto.randomUUID(), name: trimmed, lastAccessed: Date.now() };
+    setGroups(prev => [newGroup, ...prev]);
+    setActiveGroupId(newGroup.id);
+    setIsAddingGroup(false);
+    setNewGroupName("");
+  };
+
+  const cancelAddGroup = () => {
+    setIsAddingGroup(false);
+    setNewGroupName("");
+  };
+
+  const startRenameGroup = (id: string, currentName: string) => {
+    setEditingGroupId(id);
+    setEditGroupName(currentName);
+    setDeleteConfirmGroupId(null);
+  };
+
+  const commitRenameGroup = (id: string) => {
+    const trimmed = editGroupName.trim();
+    if (trimmed) {
+      setGroups(groups.map(g => g.id === id ? { ...g, name: trimmed } : g));
+    }
+    setEditingGroupId(null);
+  };
+
+  const handleDeleteGroupClick = (id: string) => {
+    if (groups.length <= 1) {
+      setWarningMessage(t.keepOneArea);
+      return;
+    }
+    setDeleteConfirmGroupId(id);
+    setIsAddingGroup(false);
+  };
+
+  const confirmDeleteGroup = (id: string) => {
+    const remaining = groups.filter(g => g.id !== id);
+    setGroups(remaining);
+    setMushrooms(mushrooms.filter(m => m.groupId !== id));
+    setDeleteConfirmGroupId(null);
+    if (activeGroupId === id && remaining.length > 0) {
+      handleSetActiveGroup(remaining[0].id);
     }
   };
 
@@ -580,45 +642,151 @@ export default function PikminDashboard() {
         </div>
       </header>
 
-      {/* Tabs / Groups Selection */}
-      <div className="max-w-2xl mx-auto mb-6 flex items-start gap-2">
-        <div className="flex-1 flex flex-wrap gap-2 py-2">
-          {groups.map(g => (
-            <button
-              key={g.id}
-              onClick={() => handleSetActiveGroup(g.id)}
-              onDoubleClick={() => {
-                const newName = prompt(t.renameArea, g.name);
-                if (newName) setGroups(groups.map(group => group.id === g.id ? {...group, name: newName} : group));
-              }}
-              className={`px-5 py-2.5 rounded-2xl whitespace-nowrap font-bold transition-all flex items-center gap-2 active:scale-95 shadow-sm ${
-                activeGroupId === g.id 
-                  ? 'bg-blue-600 text-white shadow-blue-500/20' 
-                  : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
-              }`}
-            >
-              <MapPin size={16} />
-              {g.name}
-              {activeGroupId === g.id && activeMushrooms.length > 0 && (
-                <span className="bg-white/30 text-[10px] px-1.5 py-0.5 rounded-md ml-1">{activeMushrooms.length}</span>
-              )}
-            </button>
-          ))}
-          <button 
-            onClick={addGroup}
-            className="p-2.5 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl hover:bg-slate-300 dark:hover:bg-slate-700 transition-all flex items-center justify-center min-w-[45px] active:scale-95 shadow-sm"
-          >
-            <Plus size={20} />
+      {/* Warning Alert Bar */}
+      {warningMessage && (
+        <div className="max-w-2xl mx-auto mb-4 bg-rose-500/10 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-bold px-4 py-2.5 rounded-2xl border border-rose-500/20 flex items-center justify-between animate-in slide-in-from-top-2 duration-200 shadow-sm">
+          <span className="flex items-center gap-1.5">⚠️ {warningMessage}</span>
+          <button onClick={() => setWarningMessage("")} className="text-rose-400 hover:text-rose-600 p-0.5 active:scale-90 transition-transform">
+            <X size={14} />
           </button>
         </div>
-        <button 
-           onClick={() => deleteGroup(activeGroupId)}
-           className={`p-2.5 mt-2 rounded-2xl shadow-sm transition-all active:scale-95 ${groups.length <= 1 ? 'bg-slate-100 text-slate-300 dark:bg-slate-800/50 dark:text-slate-600 cursor-not-allowed' : 'bg-white dark:bg-slate-800 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950'}`}
-           title={t.deleteTab}
-           disabled={groups.length <= 1}
-        >
-          <Trash2 size={20} />
-        </button>
+      )}
+
+      {/* Tabs / Groups Selection */}
+      <div className="max-w-2xl mx-auto mb-6 flex items-center gap-2 w-full overflow-hidden">
+        <div className="flex-1 flex flex-row gap-2 overflow-x-auto no-scrollbar scroll-smooth py-1 -my-1">
+          {groups.map(g => {
+            const isEditingThis = editingGroupId === g.id;
+            const isActive = activeGroupId === g.id;
+
+            if (isEditingThis) {
+              return (
+                <div 
+                  key={g.id} 
+                  className="flex items-center gap-1.5 bg-blue-600 dark:bg-blue-600 px-4 py-2 rounded-2xl border-2 border-blue-400 dark:border-blue-400 shadow-md animate-in zoom-in-95 duration-150 h-[42px]"
+                >
+                  <input
+                    type="text"
+                    value={editGroupName}
+                    onChange={e => setEditGroupName(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') commitRenameGroup(g.id);
+                      if (e.key === 'Escape') setEditingGroupId(null);
+                    }}
+                    className="w-24 sm:w-32 bg-transparent text-white font-bold outline-none text-sm focus:ring-0"
+                    autoFocus
+                  />
+                  <button onClick={() => commitRenameGroup(g.id)} className="text-white hover:text-blue-200 p-0.5 active:scale-90 transition-transform">
+                    <Check size={16} />
+                  </button>
+                  <button onClick={() => setEditingGroupId(null)} className="text-white hover:text-blue-200 p-0.5 active:scale-90 transition-transform">
+                    <X size={16} />
+                  </button>
+                </div>
+              );
+            }
+
+            return (
+              <button
+                key={g.id}
+                onClick={() => handleSetActiveGroup(g.id)}
+                onDoubleClick={() => startRenameGroup(g.id, g.name)}
+                className={`px-4 py-2 rounded-2xl whitespace-nowrap font-bold transition-all flex items-center gap-1.5 active:scale-95 shadow-sm h-[42px] relative group ${
+                  isActive 
+                    ? 'bg-blue-600 text-white shadow-blue-500/20' 
+                    : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
+                }`}
+              >
+                <MapPin size={14} className={isActive ? 'text-white' : 'text-slate-400'} />
+                <span>{g.name}</span>
+                
+                {/* Micro-edit icon inside the active tab */}
+                {isActive && (
+                  <span 
+                    onClick={(e) => {
+                      e.stopPropagation(); // Avoid switching tabs
+                      startRenameGroup(g.id, g.name);
+                    }}
+                    className="p-0.5 bg-white/20 hover:bg-white/30 rounded-md transition-colors cursor-pointer"
+                    title={t.renameArea}
+                  >
+                    <Edit3 size={11} />
+                  </span>
+                )}
+
+                {isActive && activeMushrooms.length > 0 && (
+                  <span className="bg-white/30 text-[10px] px-1.5 py-0.5 rounded-md ml-0.5 font-extrabold">{activeMushrooms.length}</span>
+                )}
+              </button>
+            );
+          })}
+
+          {/* Inline Add Button or Input */}
+          {isAddingGroup ? (
+            <div className="flex items-center gap-1.5 bg-white dark:bg-slate-800 px-4 py-2 rounded-2xl border-2 border-blue-500 shadow-sm animate-in zoom-in-95 duration-150 h-[42px]">
+              <input
+                type="text"
+                value={newGroupName}
+                onChange={e => setNewGroupName(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') commitAddGroup();
+                  if (e.key === 'Escape') cancelAddGroup();
+                }}
+                placeholder={t.newArea}
+                className="w-24 sm:w-32 bg-transparent text-slate-800 dark:text-slate-100 font-bold outline-none text-sm placeholder:text-slate-400"
+                autoFocus
+              />
+              <button onClick={commitAddGroup} className="text-emerald-500 hover:text-emerald-600 p-0.5 active:scale-90 transition-transform">
+                <Check size={16} />
+              </button>
+              <button onClick={cancelAddGroup} className="text-rose-500 hover:text-rose-600 p-0.5 active:scale-90 transition-transform">
+                <X size={16} />
+              </button>
+            </div>
+          ) : (
+            <button 
+              onClick={startAddGroup}
+              className="p-2.5 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl hover:bg-slate-300 dark:hover:bg-slate-700 transition-all flex items-center justify-center min-w-[42px] h-[42px] active:scale-95 shadow-sm"
+              title={t.newArea}
+            >
+              <Plus size={20} />
+            </button>
+          )}
+        </div>
+
+        {/* Inline Confirmation Trash Button */}
+        {deleteConfirmGroupId === activeGroupId ? (
+          <div className="flex items-center gap-1.5 bg-rose-600 text-white rounded-2xl shadow-md p-1 animate-in slide-in-from-right-2 duration-150 h-[42px]">
+            <span className="text-[10px] sm:text-[11px] font-black pl-2 pr-1 uppercase tracking-wider whitespace-nowrap">確定刪除此分組？</span>
+            <button 
+              onClick={() => confirmDeleteGroup(activeGroupId)} 
+              className="p-1 bg-white/20 hover:bg-white/30 rounded-xl active:scale-90 transition-transform text-white"
+              title="確定"
+            >
+              <Check size={14} />
+            </button>
+            <button 
+              onClick={() => setDeleteConfirmGroupId(null)} 
+              className="p-1 bg-white/20 hover:bg-white/30 rounded-xl active:scale-90 transition-transform text-white"
+              title="取消"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        ) : (
+          <button 
+             onClick={() => handleDeleteGroupClick(activeGroupId)}
+             className={`p-2.5 rounded-2xl shadow-sm transition-all active:scale-95 h-[42px] w-[42px] flex items-center justify-center ${
+               groups.length <= 1 
+                 ? 'bg-slate-100 text-slate-300 dark:bg-slate-800/50 dark:text-slate-600 cursor-not-allowed' 
+                 : 'bg-white dark:bg-slate-800 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/50'
+             }`}
+             title={t.deleteTab}
+             disabled={groups.length <= 1}
+          >
+            <Trash2 size={20} />
+          </button>
+        )}
       </div>
 
       <div className="grid gap-4 max-w-2xl mx-auto">
@@ -749,6 +917,7 @@ function MushroomItem({ m, now, lang, isEditing, setEditingId, onDelete, onUpdat
   onResetNote: () => void
 }) {
   const [editP, setEditP] = useState(m.participants);
+  const [editName, setEditName] = useState(m.name);
   const [editH, setEditH] = useState(0);
   const [editM, setEditM] = useState(0);
   const [editS, setEditS] = useState(0);
@@ -759,6 +928,7 @@ function MushroomItem({ m, now, lang, isEditing, setEditingId, onDelete, onUpdat
   useEffect(() => {
     if (isEditing) {
       setEditP(m.participants);
+      setEditName(m.name);
       // Pre-fill with current remaining time
       const remaining = Math.max(0, m.battleEndTime - Date.now());
       const totalSec = Math.floor(remaining / 1000);
@@ -767,7 +937,7 @@ function MushroomItem({ m, now, lang, isEditing, setEditingId, onDelete, onUpdat
       setEditS(totalSec % 60);
       setEditTimeChanged(false);
     }
-  }, [isEditing, m.participants, m.battleEndTime]);
+  }, [isEditing, m.participants, m.name, m.battleEndTime]);
 
   const diff = m.endTime - now;
   const isOver = diff <= 0;
@@ -790,8 +960,8 @@ function MushroomItem({ m, now, lang, isEditing, setEditingId, onDelete, onUpdat
       <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-3xl shadow-sm border-2 border-blue-500 transition-all text-slate-800 dark:text-slate-100">
         <div className="mb-3">
           <input 
-            defaultValue={m.name} 
-            onChange={e => onUpdate(m.id, { name: e.target.value })}
+            value={editName}
+            onChange={e => setEditName(e.target.value)}
             className="border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2 rounded-lg w-full font-bold text-slate-700 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base placeholder:text-slate-400 dark:placeholder:text-slate-500 mb-3"
             placeholder={t.defaultMushroom}
           />
@@ -812,7 +982,10 @@ function MushroomItem({ m, now, lang, isEditing, setEditingId, onDelete, onUpdat
           <button 
             id={`save-edit-btn-${m.id}`}
             onClick={() => {
-              const updates: Partial<Mushroom> = { participants: editP };
+              const updates: Partial<Mushroom> = { 
+                name: editName.trim() || t.defaultMushroom,
+                participants: editP 
+              };
               if (editTimeChanged) {
                  const battleMs = (editH*3600 + editM*60 + editS)*1000;
                  updates.battleEndTime = Date.now() + battleMs;
