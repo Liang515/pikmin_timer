@@ -40,7 +40,11 @@ const T = {
     battleEnds: '戰鬥結束：',
     estRespawn: '預計重生：',
     respawnComplete: '重生完成',
-    languageToggle: 'EN'
+    languageToggle: 'EN',
+    allAreas: '所有區域快速選擇',
+    collapse: '收起',
+    expand: '展開所有區域',
+    recordsCount: (count: number) => `${count} 個紀錄`
   },
   en: {
     home: 'Home',
@@ -77,7 +81,11 @@ const T = {
     battleEnds: 'Battle Ends: ',
     estRespawn: 'Est. Respawn: ',
     respawnComplete: 'Respawn Complete',
-    languageToggle: '中'
+    languageToggle: '中',
+    allAreas: 'All Areas Quick Select',
+    collapse: 'Collapse',
+    expand: 'Expand All Areas',
+    recordsCount: (count: number) => `${count} ${count === 1 ? 'record' : 'records'}`
   }
 };
 
@@ -430,6 +438,7 @@ export default function PikminDashboard() {
   const [editGroupName, setEditGroupName] = useState("");
   const [deleteConfirmGroupId, setDeleteConfirmGroupId] = useState<string | null>(null);
   const [warningMessage, setWarningMessage] = useState("");
+  const [isGroupsExpanded, setIsGroupsExpanded] = useState(false);
 
   const notifiedSet = useRef<Set<string>>(new Set());
 
@@ -776,7 +785,7 @@ export default function PikminDashboard() {
         ) : (
           <button 
              onClick={() => handleDeleteGroupClick(activeGroupId)}
-             className={`p-2.5 rounded-2xl shadow-sm transition-all active:scale-95 h-[42px] w-[42px] flex items-center justify-center ${
+             className={`p-2.5 rounded-2xl shadow-sm transition-all active:scale-95 h-[42px] w-[42px] flex items-center justify-center shrink-0 ${
                groups.length <= 1 
                  ? 'bg-slate-100 text-slate-300 dark:bg-slate-800/50 dark:text-slate-600 cursor-not-allowed' 
                  : 'bg-white dark:bg-slate-800 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/50'
@@ -787,7 +796,67 @@ export default function PikminDashboard() {
             <Trash2 size={20} />
           </button>
         )}
+
+        {/* Toggle Expand Button */}
+        <button
+          onClick={() => setIsGroupsExpanded(!isGroupsExpanded)}
+          className={`p-2.5 rounded-2xl shadow-sm transition-all active:scale-95 h-[42px] w-[42px] flex items-center justify-center shrink-0 ${
+            isGroupsExpanded
+              ? 'bg-blue-600 text-white shadow-blue-500/20 shadow-md'
+              : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
+          }`}
+          title={t.expand}
+        >
+          <ChevronDown size={20} className={`transform transition-transform duration-300 ${isGroupsExpanded ? 'rotate-180' : ''}`} />
+        </button>
       </div>
+
+      {/* Expanded Grid View */}
+      {isGroupsExpanded && (
+        <div className="max-w-2xl mx-auto mb-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-[2rem] shadow-xl animate-in slide-in-from-top-2 duration-200 w-full">
+          <div className="flex justify-between items-center mb-3 px-1">
+            <span className="text-xs font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+              <MapPin size={12} className="text-blue-500 dark:text-blue-400" />
+              {t.allAreas}
+            </span>
+            <button 
+              onClick={() => setIsGroupsExpanded(false)} 
+              className="text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 font-bold px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              {t.collapse}
+            </button>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {groups.map(g => {
+              const isActive = activeGroupId === g.id;
+              const groupMushrooms = mushrooms.filter(m => m.groupId === g.id);
+              return (
+                <button
+                  key={g.id}
+                  onClick={() => {
+                    handleSetActiveGroup(g.id);
+                    setIsGroupsExpanded(false);
+                  }}
+                  className={`p-3 rounded-2xl border text-left flex flex-col justify-between transition-all active:scale-95 duration-150 h-20 ${
+                    isActive
+                      ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/20'
+                      : 'bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border-slate-100 dark:border-slate-800 text-slate-700 dark:text-slate-300'
+                  }`}
+                >
+                  <span className="font-bold text-sm truncate w-full">{g.name}</span>
+                  <span className={`text-[10px] self-end px-2 py-0.5 rounded-lg font-black ${
+                    isActive 
+                      ? 'bg-white/20 text-white' 
+                      : 'bg-slate-200/60 dark:bg-slate-700/60 text-slate-500 dark:text-slate-400'
+                  }`}>
+                    {t.recordsCount(groupMushrooms.length)}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-4 max-w-2xl mx-auto">
         {activeMushrooms.length === 0 && (
