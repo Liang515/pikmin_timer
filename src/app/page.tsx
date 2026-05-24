@@ -687,7 +687,7 @@ export default function PikminDashboard() {
                       if (e.key === 'Enter') commitRenameGroup(g.id);
                       if (e.key === 'Escape') setEditingGroupId(null);
                     }}
-                    className="w-24 sm:w-32 bg-transparent text-white font-bold outline-none text-sm sm:text-base border-none p-0 focus:ring-0"
+                    className="w-24 sm:w-32 bg-transparent text-white font-bold outline-none text-base border-none p-0 focus:ring-0"
                     autoFocus
                   />
                   <button 
@@ -818,7 +818,7 @@ export default function PikminDashboard() {
 
       {/* Expanded Grid View */}
       {isGroupsExpanded && (
-        <div className="max-w-2xl mx-auto mb-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 sm:p-5 pb-5 sm:pb-6 rounded-3xl shadow-xl animate-in slide-in-from-top-2 duration-200 w-full">
+        <div className="max-w-2xl mx-auto mb-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 sm:p-5 pb-6 sm:pb-8 rounded-3xl shadow-xl animate-in slide-in-from-top-2 duration-200 w-full">
           <div className="flex justify-between items-center mb-3 px-1">
             <span className="text-xs font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
               <MapPin size={12} className="text-blue-500 dark:text-blue-400" />
@@ -845,7 +845,7 @@ export default function PikminDashboard() {
                   className={`p-3 rounded-2xl border text-left flex flex-col justify-between transition-all active:scale-95 duration-150 h-20 ${
                     isActive
                       ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/20'
-                      : 'bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border-slate-100 dark:border-slate-800 text-slate-700 dark:text-slate-300'
+                      : 'bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border-slate-200 dark:border-slate-700/80 shadow-sm text-slate-700 dark:text-slate-300'
                   }`}
                 >
                   <span className="font-bold text-sm truncate w-full">{g.name}</span>
