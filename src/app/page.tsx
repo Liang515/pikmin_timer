@@ -44,7 +44,9 @@ const T = {
     allAreas: '所有區域快速選擇',
     collapse: '收起',
     expand: '展開所有區域',
-    recordsCount: (count: number) => `${count} 個紀錄`
+    recordsCount: (count: number) => `${count} 個紀錄`,
+    confirmDelete: '確定刪除？',
+    deleteBtn: '刪除'
   },
   en: {
     home: 'Home',
@@ -85,7 +87,9 @@ const T = {
     allAreas: 'All Areas Quick Select',
     collapse: 'Collapse',
     expand: 'Expand All Areas',
-    recordsCount: (count: number) => `${count} ${count === 1 ? 'record' : 'records'}`
+    recordsCount: (count: number) => `${count} ${count === 1 ? 'record' : 'records'}`,
+    confirmDelete: 'Delete?',
+    deleteBtn: 'Delete'
   }
 };
 
@@ -672,24 +676,27 @@ export default function PikminDashboard() {
               return (
                 <div 
                   key={g.id} 
-                  className="flex items-center gap-1.5 bg-blue-600 dark:bg-blue-600 px-4 py-2 rounded-2xl border-2 border-blue-400 dark:border-blue-400 shadow-md animate-in zoom-in-95 duration-150 h-[42px]"
+                  className="flex items-center bg-blue-600 text-white px-4 rounded-2xl shadow-md h-[42px] animate-in zoom-in-95 duration-150 shrink-0"
                 >
                   <input
                     type="text"
                     value={editGroupName}
                     onChange={e => setEditGroupName(e.target.value)}
+                    onBlur={() => commitRenameGroup(g.id)}
                     onKeyDown={e => {
                       if (e.key === 'Enter') commitRenameGroup(g.id);
                       if (e.key === 'Escape') setEditingGroupId(null);
                     }}
-                    className="w-24 sm:w-32 bg-transparent text-white font-bold outline-none text-sm focus:ring-0"
+                    className="w-24 sm:w-32 bg-transparent text-white font-bold outline-none text-sm sm:text-base border-none p-0 focus:ring-0"
                     autoFocus
                   />
-                  <button onClick={() => commitRenameGroup(g.id)} className="text-white hover:text-blue-200 p-0.5 active:scale-90 transition-transform">
-                    <Check size={16} />
-                  </button>
-                  <button onClick={() => setEditingGroupId(null)} className="text-white hover:text-blue-200 p-0.5 active:scale-90 transition-transform">
-                    <X size={16} />
+                  <button 
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => commitRenameGroup(g.id)} 
+                    className="text-white hover:text-blue-200 ml-2.5 p-1 bg-white/10 rounded-lg active:scale-90 transition-transform flex items-center justify-center shrink-0"
+                    title="確定"
+                  >
+                    <Check size={14} />
                   </button>
                 </div>
               );
@@ -765,21 +772,19 @@ export default function PikminDashboard() {
 
         {/* Inline Confirmation Trash Button */}
         {deleteConfirmGroupId === activeGroupId ? (
-          <div className="flex items-center gap-1.5 bg-rose-600 text-white rounded-2xl shadow-md p-1 animate-in slide-in-from-right-2 duration-150 h-[42px]">
-            <span className="text-[10px] sm:text-[11px] font-black pl-2 pr-1 uppercase tracking-wider whitespace-nowrap">確定刪除此分組？</span>
+          <div className="flex items-center gap-2 bg-rose-500 text-white rounded-2xl shadow-md px-3 py-1 animate-in slide-in-from-right-2 duration-150 h-[42px] shrink-0">
+            <span className="text-xs font-bold whitespace-nowrap">{t.confirmDelete}</span>
             <button 
               onClick={() => confirmDeleteGroup(activeGroupId)} 
-              className="p-1 bg-white/20 hover:bg-white/30 rounded-xl active:scale-90 transition-transform text-white"
-              title="確定"
+              className="px-2.5 py-1 bg-white text-rose-600 rounded-xl text-xs font-black hover:bg-slate-100 active:scale-90 transition-transform flex items-center justify-center h-7"
             >
-              <Check size={14} />
+              {t.deleteBtn}
             </button>
             <button 
               onClick={() => setDeleteConfirmGroupId(null)} 
-              className="p-1 bg-white/20 hover:bg-white/30 rounded-xl active:scale-90 transition-transform text-white"
-              title="取消"
+              className="px-2.5 py-1 bg-white/20 text-white rounded-xl text-xs font-black hover:bg-white/30 active:scale-90 transition-transform flex items-center justify-center h-7"
             >
-              <X size={14} />
+              {t.cancel}
             </button>
           </div>
         ) : (
@@ -813,7 +818,7 @@ export default function PikminDashboard() {
 
       {/* Expanded Grid View */}
       {isGroupsExpanded && (
-        <div className="max-w-2xl mx-auto mb-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-[2rem] shadow-xl animate-in slide-in-from-top-2 duration-200 w-full">
+        <div className="max-w-2xl mx-auto mb-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 sm:p-5 pb-5 sm:pb-6 rounded-3xl shadow-xl animate-in slide-in-from-top-2 duration-200 w-full">
           <div className="flex justify-between items-center mb-3 px-1">
             <span className="text-xs font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
               <MapPin size={12} className="text-blue-500 dark:text-blue-400" />
