@@ -935,9 +935,9 @@ function MushroomItem({ m, now, lang, isEditing, setEditingId, onDelete, onUpdat
   if (isOver) {
     cardClass = "bg-slate-200 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 opacity-75";
   } else if (isWaitingRespawn) {
-    cardClass = "bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-lg shadow-orange-500/30 animate-pulse -translate-y-1";
+    cardClass = "bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-lg shadow-orange-500/20 -translate-y-1";
   } else {
-    cardClass = "bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-xl shadow-blue-500/10 -translate-y-1";
+    cardClass = "bg-gradient-to-br from-emerald-800/80 to-teal-900/80 text-white/90 shadow-md shadow-emerald-500/5 -translate-y-1";
   }
 
   return (
