@@ -527,8 +527,8 @@ export default function PikminDashboard() {
       )}
 
       {/* Tabs / Groups Selection */}
-      <div className="max-w-2xl mx-auto mb-6 flex items-center gap-2 w-full overflow-hidden">
-        <div className="flex-1 flex flex-row gap-2 overflow-x-auto no-scrollbar scroll-smooth py-1.5 -my-1.5 items-center">
+      <div className="max-w-2xl mx-auto mb-6 flex items-center gap-2 w-full py-2 -my-2 overflow-hidden">
+        <div className="flex-1 flex flex-row gap-2 overflow-x-auto no-scrollbar scroll-smooth py-2 -my-2 items-center">
           {groups.map(g => {
             const isEditingThis = editingGroupId === g.id;
             const isActive = activeGroupId === g.id;
@@ -571,7 +571,7 @@ export default function PikminDashboard() {
                 className={`px-4 py-2 rounded-full whitespace-nowrap font-bold transition-all flex items-center gap-1.5 active:scale-95 shadow-sm h-[42px] shrink-0 relative group ${
                   isActive 
                     ? 'bg-emerald-600 text-white shadow-emerald-500/20' 
-                    : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:scale-102 hover:-translate-y-0.5'
+                    : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:scale-102 hover:-translate-y-0.5 border border-stone-200/60 dark:border-slate-800/80'
                 }`}
               >
                 <MapPin size={14} className={isActive ? 'text-white' : 'text-slate-400'} />
@@ -623,10 +623,11 @@ export default function PikminDashboard() {
           ) : (
             <button 
               onClick={startAddGroup}
-              className="p-2.5 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-full hover:bg-slate-300 dark:hover:bg-slate-700 transition-all flex items-center justify-center min-w-[42px] h-[42px] shrink-0 active:scale-95 hover:scale-105 shadow-sm"
+              className="px-3.5 bg-stone-200/60 dark:bg-slate-800 text-stone-600 dark:text-slate-300 rounded-full hover:bg-stone-300/80 dark:hover:bg-slate-700 transition-all flex items-center gap-1 h-[42px] shrink-0 active:scale-95 hover:scale-103 font-bold text-xs shadow-sm border border-stone-300/20"
               title={t.newArea}
             >
-              <Plus size={20} />
+              <Plus size={14} />
+              <span>{lang === 'zh' ? '區域' : 'Area'}</span>
             </button>
           )}
         </div>
@@ -703,19 +704,22 @@ export default function PikminDashboard() {
                     handleSetActiveGroup(g.id);
                     setIsGroupsExpanded(false);
                   }}
-                  className={`p-3 rounded-2xl border text-left flex flex-col justify-between transition-all active:scale-95 duration-150 h-20 ${
+                  className={`flex items-center justify-between gap-2 px-3 sm:px-4 py-2 rounded-full border text-left transition-all active:scale-95 duration-150 h-12 w-full hover:scale-102 hover:-translate-y-0.5 ${
                     isActive
                       ? 'bg-emerald-600 border-emerald-600 text-white shadow-md shadow-emerald-500/20'
-                      : 'bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border-slate-200 dark:border-slate-700/80 shadow-sm text-slate-700 dark:text-slate-300'
+                      : 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border-stone-200/60 dark:border-slate-800/80 shadow-sm text-slate-700 dark:text-slate-300'
                   }`}
                 >
-                  <span className="font-bold text-sm truncate w-full">{g.name}</span>
-                  <span className={`text-[10px] self-end px-2 py-0.5 rounded-lg font-black ${
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <MapPin size={12} className={isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500'} />
+                    <span className="font-bold text-xs sm:text-sm truncate leading-none">{g.name}</span>
+                  </div>
+                  <span className={`text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full font-black shrink-0 ${
                     isActive 
                       ? 'bg-white/20 text-white' 
-                      : 'bg-slate-200/60 dark:bg-slate-700/60 text-slate-500 dark:text-slate-400'
+                      : 'bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400'
                   }`}>
-                    {t.recordsCount(groupMushrooms.length)}
+                    {groupMushrooms.length}
                   </span>
                 </button>
               );
@@ -748,6 +752,10 @@ export default function PikminDashboard() {
             }}
           />
         ))}
+        {/* Scroll Spacer to prevent bottom-most card buttons from being blocked by FAB */}
+        {activeMushrooms.length > 0 && (
+          <div className="h-20 sm:h-24 select-none pointer-events-none" />
+        )}
       </div>
 
       {/* Floating Action Button */}
@@ -943,7 +951,7 @@ function MushroomItem({ m, now, lang, isEditing, setEditingId, onDelete, onUpdat
   if (isOver) {
     cardClass = "bg-white/70 dark:bg-slate-900/60 backdrop-blur-md text-slate-700 dark:text-slate-300 border border-stone-200/50 dark:border-slate-800/60 shadow-sm opacity-90";
   } else if (isWaitingRespawn) {
-    cardClass = "bg-gradient-to-br from-[#e4a834] to-[#cc7b19] text-white shadow-lg shadow-orange-500/20 border border-orange-400/20";
+    cardClass = "bg-gradient-to-br from-[#f8a532] to-[#e75a24] text-white shadow-lg shadow-orange-500/25 border border-orange-400/20";
   } else {
     cardClass = "bg-gradient-to-br from-[#809b7b] to-[#5d7c58] text-white shadow-md shadow-emerald-800/10 border border-emerald-700/20";
   }
@@ -978,15 +986,15 @@ function MushroomItem({ m, now, lang, isEditing, setEditingId, onDelete, onUpdat
         <div className="flex gap-1 sm:gap-1.5 font-mono text-2xl sm:text-3xl font-bold">
           {isOver ? <span className="text-lg sm:text-xl flex items-center gap-2 text-slate-600 dark:text-slate-300 font-sans"><Sparkles size={20}/> {t.respawnComplete}</span> : (
             <>
-              <div className="bg-black/20 px-1.5 sm:px-2 py-1 rounded-xl flex flex-col items-center min-w-[40px] sm:min-w-[50px]">
+              <div className="bg-white/15 px-1.5 sm:px-2 py-1 rounded-xl flex flex-col items-center min-w-[40px] sm:min-w-[50px]">
                 <span className="text-xl sm:text-2xl">{timeFmt.h}</span>
               </div>
-              <span className="opacity-50">:</span>
-              <div className="bg-black/20 px-1.5 sm:px-2 py-1 rounded-xl flex flex-col items-center min-w-[40px] sm:min-w-[50px]">
+              <span className="opacity-60">:</span>
+              <div className="bg-white/15 px-1.5 sm:px-2 py-1 rounded-xl flex flex-col items-center min-w-[40px] sm:min-w-[50px]">
                 <span className="text-xl sm:text-2xl">{timeFmt.m}</span>
               </div>
-              <span className="opacity-50">:</span>
-              <div className="bg-black/20 px-1.5 sm:px-2 py-1 rounded-xl flex flex-col items-center min-w-[40px] sm:min-w-[50px]">
+              <span className="opacity-60">:</span>
+              <div className="bg-white/15 px-1.5 sm:px-2 py-1 rounded-xl flex flex-col items-center min-w-[40px] sm:min-w-[50px]">
                 <span className="text-xl sm:text-2xl">{timeFmt.s}</span>
               </div>
             </>
