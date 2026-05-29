@@ -932,8 +932,17 @@ function MushroomItem({ m, now, lang, isEditing, setEditingId, onDelete, onUpdat
     );
   }
 
+  let cardClass = "";
+  if (isOver) {
+    cardClass = "bg-slate-200 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 opacity-75";
+  } else if (isWaitingRespawn) {
+    cardClass = "bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-lg shadow-orange-500/30 animate-pulse -translate-y-1";
+  } else {
+    cardClass = "bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-xl shadow-blue-500/10 -translate-y-1";
+  }
+
   return (
-    <div className={`p-5 rounded-3xl transition-all duration-300 relative overflow-hidden flex flex-col sm:flex-row justify-between items-center gap-4 ${isOver ? 'bg-slate-200 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 opacity-80' : `bg-gradient-to-br text-white shadow-xl -translate-y-1 ${m.color}`}`}>
+    <div className={`p-5 rounded-3xl transition-all duration-300 relative overflow-hidden flex flex-col sm:flex-row justify-between items-center gap-4 ${cardClass}`}>
       <div className="flex flex-col items-start w-full sm:w-auto">
         <h3 className={`text-xl font-bold flex flex-wrap items-center gap-2 ${isOver ? 'text-slate-800 dark:text-slate-200' : 'text-white'}`}>
           {m.name}
