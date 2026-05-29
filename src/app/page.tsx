@@ -169,7 +169,7 @@ function KeyboardTimePicker({ h, m, s, onChangeH, onChangeM, onChangeS, onEnter 
           onChange={e => handleInputChange(e.target.value, 23, onChangeH, mRef)}
           onKeyDown={e => handleKeyDown(e)}
           placeholder="00"
-          className="w-full text-center text-2xl font-mono font-bold bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-500 rounded-xl py-2 outline-none text-slate-800 dark:text-slate-100 transition-colors shadow-sm focus:shadow-md"
+          className="w-full text-center text-2xl font-mono font-bold bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 focus:border-emerald-500 dark:focus:border-emerald-500 rounded-xl py-2 outline-none text-slate-800 dark:text-slate-100 transition-colors shadow-sm focus:shadow-md"
         />
         <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">時 (H)</span>
       </div>
@@ -186,7 +186,7 @@ function KeyboardTimePicker({ h, m, s, onChangeH, onChangeM, onChangeS, onEnter 
           onChange={e => handleInputChange(e.target.value, 59, onChangeM, sRef)}
           onKeyDown={e => handleKeyDown(e, hRef)}
           placeholder="00"
-          className="w-full text-center text-2xl font-mono font-bold bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-500 rounded-xl py-2 outline-none text-slate-800 dark:text-slate-100 transition-colors shadow-sm focus:shadow-md"
+          className="w-full text-center text-2xl font-mono font-bold bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 focus:border-emerald-500 dark:focus:border-emerald-500 rounded-xl py-2 outline-none text-slate-800 dark:text-slate-100 transition-colors shadow-sm focus:shadow-md"
         />
         <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">分 (M)</span>
       </div>
@@ -203,7 +203,7 @@ function KeyboardTimePicker({ h, m, s, onChangeH, onChangeM, onChangeS, onEnter 
           onChange={e => handleInputChange(e.target.value, 59, onChangeS)}
           onKeyDown={e => handleKeyDown(e, mRef)}
           placeholder="00"
-          className="w-full text-center text-2xl font-mono font-bold bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-500 rounded-xl py-2 outline-none text-slate-800 dark:text-slate-100 transition-colors shadow-sm focus:shadow-md"
+          className="w-full text-center text-2xl font-mono font-bold bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 focus:border-emerald-500 dark:focus:border-emerald-500 rounded-xl py-2 outline-none text-slate-800 dark:text-slate-100 transition-colors shadow-sm focus:shadow-md"
         />
         <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">秒 (S)</span>
       </div>
@@ -229,8 +229,8 @@ function ParticipantSlider({ value, onChange }: {
       </button>
       <div className="flex-1 flex flex-col gap-1.5">
         <div className="flex items-center justify-center">
-          <Users size={16} className="text-blue-500 dark:text-blue-400 mr-1.5" />
-          <span className="text-2xl font-extrabold text-blue-600 dark:text-blue-400 tabular-nums min-w-[2ch] text-center">{value}</span>
+          <Users size={16} className="text-emerald-500 dark:text-emerald-400 mr-1.5" />
+          <span className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 tabular-nums min-w-[2ch] text-center">{value}</span>
         </div>
         <input
           type="range"
@@ -238,7 +238,7 @@ function ParticipantSlider({ value, onChange }: {
           max={30}
           value={value}
           onChange={e => onChange(parseInt(e.target.value))}
-          className="participant-slider w-full h-2 rounded-full appearance-none cursor-pointer bg-slate-200 dark:bg-slate-700 accent-blue-600"
+          className="participant-slider w-full h-2 rounded-full appearance-none cursor-pointer bg-slate-200 dark:bg-slate-700 accent-emerald-600"
         />
         <div className="flex justify-between text-[10px] font-bold text-slate-400 dark:text-slate-500 px-0.5">
           <span>1</span>
@@ -529,7 +529,7 @@ export default function PikminDashboard() {
               return (
                 <div 
                   key={g.id} 
-                  className="flex items-center bg-blue-600 text-white px-4 rounded-2xl shadow-md h-[42px] animate-in zoom-in-95 duration-150 shrink-0"
+                  className="flex items-center bg-emerald-600 text-white px-4 rounded-2xl shadow-md h-[42px] animate-in zoom-in-95 duration-150 shrink-0"
                 >
                   <input
                     type="text"
@@ -546,7 +546,7 @@ export default function PikminDashboard() {
                   <button 
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => commitRenameGroup(g.id)} 
-                    className="text-white hover:text-blue-200 ml-2.5 p-1 bg-white/10 rounded-lg active:scale-90 transition-transform flex items-center justify-center shrink-0"
+                    className="text-white hover:text-emerald-200 ml-2.5 p-1 bg-white/10 rounded-lg active:scale-90 transition-transform flex items-center justify-center shrink-0"
                     title="確定"
                   >
                     <Check size={14} />
@@ -562,7 +562,7 @@ export default function PikminDashboard() {
                 onDoubleClick={() => startRenameGroup(g.id, g.name)}
                 className={`px-4 py-2 rounded-2xl whitespace-nowrap font-bold transition-all flex items-center gap-1.5 active:scale-95 shadow-sm h-[42px] relative group ${
                   isActive 
-                    ? 'bg-blue-600 text-white shadow-blue-500/20' 
+                    ? 'bg-emerald-600 text-white shadow-emerald-500/20' 
                     : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
                 }`}
               >
@@ -660,7 +660,7 @@ export default function PikminDashboard() {
           onClick={() => setIsGroupsExpanded(!isGroupsExpanded)}
           className={`p-2.5 rounded-2xl shadow-sm transition-all active:scale-95 h-[42px] w-[42px] flex items-center justify-center shrink-0 ${
             isGroupsExpanded
-              ? 'bg-blue-600 text-white shadow-blue-500/20 shadow-md'
+              ? 'bg-emerald-600 text-white shadow-emerald-500/20 shadow-md'
               : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
           }`}
           title={t.expand}
@@ -674,7 +674,7 @@ export default function PikminDashboard() {
         <div className="max-w-2xl mx-auto mb-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 sm:p-5 pb-6 sm:pb-8 rounded-3xl shadow-xl animate-in slide-in-from-top-2 duration-200 w-full">
           <div className="flex justify-between items-center mb-3 px-1">
             <span className="text-xs font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
-              <MapPin size={12} className="text-blue-500 dark:text-blue-400" />
+              <MapPin size={12} className="text-emerald-500 dark:text-emerald-400" />
               {t.allAreas}
             </span>
             <button 
@@ -697,7 +697,7 @@ export default function PikminDashboard() {
                   }}
                   className={`p-3 rounded-2xl border text-left flex flex-col justify-between transition-all active:scale-95 duration-150 h-20 ${
                     isActive
-                      ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/20'
+                      ? 'bg-emerald-600 border-emerald-600 text-white shadow-md shadow-emerald-500/20'
                       : 'bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border-slate-200 dark:border-slate-700/80 shadow-sm text-slate-700 dark:text-slate-300'
                   }`}
                 >
@@ -745,7 +745,7 @@ export default function PikminDashboard() {
       {/* Floating Action Button */}
       <button 
         onClick={() => setIsAdding(true)}
-        className={`fixed bottom-6 right-6 sm:bottom-10 sm:right-10 w-16 h-16 bg-blue-600 text-white rounded-full shadow-[0_10px_25px_rgba(37,99,235,0.4)] flex items-center justify-center hover:scale-105 active:scale-95 transition-all z-40 group ${editingId ? 'translate-y-24 opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}
+        className={`fixed bottom-6 right-6 sm:bottom-10 sm:right-10 w-16 h-16 bg-emerald-600 text-white rounded-full shadow-[0_10px_25px_rgba(16,185,129,0.4)] flex items-center justify-center hover:scale-105 active:scale-95 transition-all z-40 group ${editingId ? 'translate-y-24 opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}
       >
         <Plus size={32} className="group-hover:rotate-90 transition-transform duration-300" />
       </button>
@@ -757,7 +757,7 @@ export default function PikminDashboard() {
           <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[2rem] p-5 sm:p-6 shadow-2xl relative z-10 animate-in slide-in-from-bottom-10 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-800">
             <div className="flex justify-between items-center mb-4 sm:mb-6">
               <h2 className="text-xl sm:text-2xl font-extrabold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                 <Sparkles className="text-amber-500" size={24} />
+                 <Sparkles className="text-emerald-500" size={24} />
                  {t.addTo} {groups.find(g => g.id === activeGroupId)?.name}
               </h2>
               <button onClick={() => setIsAdding(false)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 transition-all">
@@ -768,7 +768,7 @@ export default function PikminDashboard() {
             <div className="grid gap-5">
               <div>
                  <label className="block text-sm font-bold text-slate-600 dark:text-slate-300 mb-2">{t.mushroomName}</label>
-                 <input id="quick-name" placeholder={t.mushroomNamePlaceholder} className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 p-4 rounded-2xl outline-none focus:border-blue-500 dark:focus:border-blue-500 transition-all text-lg font-medium placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-800 dark:text-slate-100" />
+                 <input id="quick-name" placeholder={t.mushroomNamePlaceholder} className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 p-4 rounded-2xl outline-none focus:border-emerald-500 dark:focus:border-emerald-500 transition-all text-lg font-medium placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-800 dark:text-slate-100" />
               </div>
               
               <div>
@@ -797,7 +797,7 @@ export default function PikminDashboard() {
                        }}
                        className={`px-3 py-1.5 rounded-lg text-sm font-bold whitespace-nowrap active:scale-95 transition-all ${
                          addH === p.h && addM === p.m && addS === p.s
-                           ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30'
+                           ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/30'
                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                        }`}
                      >
@@ -811,15 +811,14 @@ export default function PikminDashboard() {
                     onEnter={handleAddSubmit}
                   />
                </div>
-
+ 
                <button 
                  id="start-tracking-btn"
                  onClick={handleAddSubmit}
-                 className="w-full bg-blue-600 hover:bg-blue-700 active:scale-95 text-white py-4 rounded-2xl font-bold text-lg shadow-[0_10px_20px_rgba(37,99,235,0.3)] transition-all flex items-center justify-center gap-2 mt-2 focus:outline-none focus:ring-4 focus:ring-blue-500/50"
+                 className="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white py-4 rounded-2xl font-bold text-lg shadow-[0_10px_20px_rgba(16,185,129,0.3)] transition-all flex items-center justify-center gap-2 mt-2 focus:outline-none focus:ring-4 focus:ring-emerald-500/50"
                >
                  <Plus size={24} /> {t.startTracking}
                </button>
-
             </div>
           </div>
         </div>
@@ -899,7 +898,7 @@ function MushroomItem({ m, now, lang, isEditing, setEditingId, onDelete, onUpdat
           <input 
             value={editName}
             onChange={e => setEditName(e.target.value)}
-            className="border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2 rounded-lg w-full font-bold text-slate-700 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base placeholder:text-slate-400 dark:placeholder:text-slate-500 mb-3"
+            className="border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2 rounded-lg w-full font-bold text-slate-700 dark:text-slate-100 outline-none focus:ring-2 focus:ring-emerald-500 text-sm sm:text-base placeholder:text-slate-400 dark:placeholder:text-slate-500 mb-3"
             placeholder={t.defaultMushroom}
           />
           <ParticipantSlider value={editP} onChange={setEditP} />
@@ -920,7 +919,7 @@ function MushroomItem({ m, now, lang, isEditing, setEditingId, onDelete, onUpdat
           <button 
             id={`save-edit-btn-${m.id}`}
             onClick={handleEditSubmit}
-            className="bg-blue-600 text-white px-4 py-3 rounded-xl flex-1 font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-500/30 active:scale-95 transition-transform hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-500/50"
+            className="bg-emerald-600 text-white px-4 py-3 rounded-xl flex-1 font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/30 active:scale-95 transition-transform hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-500/50"
           >
             <Check size={18} /> {t.saveChanges}
           </button>
