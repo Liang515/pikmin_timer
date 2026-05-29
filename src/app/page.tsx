@@ -93,274 +93,120 @@ const T = {
   }
 };
 
-/* ─── Scroll Wheel Picker Column ─── */
-const ITEM_HEIGHT = 44;
-const VISIBLE_ITEMS = 3;
-const HALF = Math.floor(VISIBLE_ITEMS / 2);
-
-function WheelColumn({ value, max, label, onChange }: {
-  value: number;
-  max: number;
-  label: string;
-  onChange: (v: number) => void;
-}) {
-  const [offset, setOffset] = useState(0);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editText, setEditText] = useState('');
-  const inputRef = useRef<HTMLInputElement>(null);
-  const dragStart = useRef<{ y: number; startValue: number; lastY: number; lastTime: number; velocity: number } | null>(null);
-  const wheelRef = useRef<HTMLDivElement>(null);
-  const animFrame = useRef<number | null>(null);
-  const animTarget = useRef<number | null>(null);
-
-  useEffect(() => {
-    const el = wheelRef.current;
-    if (!el) return;
-
-    const handleTouchMoveNative = (e: TouchEvent) => {
-      e.preventDefault();
-    };
-
-    el.addEventListener('touchmove', handleTouchMoveNative, { passive: false });
-    return () => {
-      el.removeEventListener('touchmove', handleTouchMoveNative);
-    };
-  }, []);
-
-  const handleStart = (clientY: number) => {
-    if (isEditing) return;
-    // If an animation is in progress, commit its target immediately
-    let baseValue = value;
-    if (animFrame.current) {
-      cancelAnimationFrame(animFrame.current);
-      animFrame.current = null;
-      if (animTarget.current !== null) {
-        baseValue = animTarget.current;
-        onChange(baseValue);
-      }
-    }
-    animTarget.current = null;
-    dragStart.current = {
-      y: clientY,
-      startValue: baseValue,
-      lastY: clientY,
-      lastTime: performance.now(),
-      velocity: 0,
-    };
-    setOffset(0);
-  };
-
-  const handleMove = (clientY: number) => {
-    if (!dragStart.current || isEditing) return;
-    const now = performance.now();
-    const dt = now - dragStart.current.lastTime;
-    const dy = dragStart.current.y - clientY;
-
-    if (dt > 0) {
-      // Blend velocity for smoother tracking
-      const instantV = -(clientY - dragStart.current.lastY) / dt;
-      dragStart.current.velocity = dragStart.current.velocity * 0.3 + instantV * 0.7;
-    }
-    dragStart.current.lastY = clientY;
-    dragStart.current.lastTime = now;
-    setOffset(dy);
-  };
-
-  const handleEnd = () => {
-    if (!dragStart.current) return;
-    const currentOffset = offset;
-    const v = dragStart.current.velocity || 0;
-    const startVal = dragStart.current.startValue;
-    dragStart.current = null;
-
-    // Intercept pure-tap gestures to bypass snap animations (fixing click bounce-back bug)
-    if (Math.abs(currentOffset) < 2 && Math.abs(v) < 0.01) {
-      setOffset(0);
-      animTarget.current = null;
-      return;
-    }
-
-    // Stronger inertia for iOS-like feel
-    const inertiaDistance = v * 350;
-    const finalOffset = currentOffset + inertiaDistance;
-    const itemsMoved = Math.round(finalOffset / ITEM_HEIGHT);
-    const newValue = Math.max(0, Math.min(max - 1, startVal + itemsMoved));
-    const targetOffset = (newValue - startVal) * ITEM_HEIGHT;
-    animTarget.current = newValue;
-
-    const startTime = performance.now();
-    const travel = Math.abs(targetOffset - currentOffset);
-    const duration = Math.min(800, Math.max(180, travel * 2.5));
-
-    const animateSnap = (nowTime: number) => {
-      const elapsed = nowTime - startTime;
-      const progress = Math.min(1, elapsed / duration);
-      // Ease-out quart for snappier deceleration
-      const ease = 1 - Math.pow(1 - progress, 4);
-      const current = currentOffset + (targetOffset - currentOffset) * ease;
-      setOffset(current);
-
-      if (progress < 1) {
-        animFrame.current = requestAnimationFrame(animateSnap);
-      } else {
-        animFrame.current = null;
-        animTarget.current = null;
-        setOffset(0);
-        onChange(newValue);
-      }
-    };
-
-    animFrame.current = requestAnimationFrame(animateSnap);
-  };
-
-  const nudge = (dir: 1 | -1) => {
-    const next = Math.max(0, Math.min(max - 1, value + dir));
-    onChange(next);
-  };
-
-  // Mouse wheel support for desktop
-  const handleWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    const dir = e.deltaY > 0 ? 1 : -1;
-    nudge(dir);
-  };
-
-  // Double-click to edit inline
-  const startEdit = () => {
-    setIsEditing(true);
-    setEditText(value.toString());
-    setTimeout(() => inputRef.current?.select(), 0);
-  };
-
-  const commitEdit = () => {
-    const parsed = parseInt(editText);
-    if (!isNaN(parsed)) {
-      onChange(Math.max(0, Math.min(max - 1, parsed)));
-    }
-    setIsEditing(false);
-  };
-
-  const dragItems = Math.round(offset / ITEM_HEIGHT);
-  const centerValue = Math.max(0, Math.min(max - 1, value + dragItems));
-  const fractionalOffset = offset - dragItems * ITEM_HEIGHT;
-
-  const visibleIndices: number[] = [];
-  for (let i = centerValue - HALF; i <= centerValue + HALF; i++) {
-    visibleIndices.push(i);
-  }
-
-  return (
-    <div className="flex flex-col items-center gap-1 select-none">
-      <button
-        type="button"
-        onClick={() => nudge(-1)}
-        className="p-1 rounded-lg text-slate-400 dark:text-slate-500 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 active:scale-90 transition-all"
-        aria-label={`Decrease ${label}`}
-      >
-        <ChevronUp size={20} />
-      </button>
-
-      <div
-        ref={wheelRef}
-        className="relative overflow-hidden cursor-grab active:cursor-grabbing"
-        style={{ height: ITEM_HEIGHT * VISIBLE_ITEMS, width: 72, touchAction: 'none' }}
-        onMouseDown={e => { e.preventDefault(); handleStart(e.clientY); }}
-        onMouseMove={e => { if (dragStart.current) handleMove(e.clientY); }}
-        onMouseUp={handleEnd}
-        onMouseLeave={() => { if (dragStart.current) handleEnd(); }}
-        onTouchStart={e => handleStart(e.touches[0].clientY)}
-        onTouchMove={e => { e.preventDefault(); handleMove(e.touches[0].clientY); }}
-        onTouchEnd={handleEnd}
-        onWheel={handleWheel}
-      >
-        {/* Highlight band */}
-        <div
-          className="absolute left-0 right-0 pointer-events-none z-10 border-y-2 border-blue-500/40 dark:border-blue-400/40 bg-blue-50/60 dark:bg-blue-900/20 rounded-lg"
-          style={{ top: ITEM_HEIGHT * HALF, height: ITEM_HEIGHT }}
-        />
-        {/* Fade top & bottom */}
-        <div className="absolute top-0 left-0 right-0 h-10 bg-gradient-to-b from-white dark:from-slate-900 to-transparent pointer-events-none z-20" />
-        <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-white dark:from-slate-900 to-transparent pointer-events-none z-20" />
-
-        {/* Items */}
-        <div
-          className="absolute left-0 right-0 transition-transform"
-          style={{
-            transform: `translateY(${-fractionalOffset}px)`,
-            transitionDuration: (dragStart.current || animFrame.current) ? '0ms' : '200ms',
-          }}
-        >
-          {visibleIndices.map((i, idx) => {
-            const isCenter = idx === HALF;
-            const isValid = i >= 0 && i < max;
-
-            // Center item: show inline input when editing
-            if (isCenter && isEditing) {
-              return (
-                <div key={idx} className="flex items-center justify-center" style={{ height: ITEM_HEIGHT }}>
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    inputMode="numeric"
-                    value={editText}
-                    onChange={e => setEditText(e.target.value.replace(/\D/g, '').slice(0, 2))}
-                    onBlur={commitEdit}
-                    onKeyDown={e => { if (e.key === 'Enter') commitEdit(); if (e.key === 'Escape') setIsEditing(false); }}
-                    className="w-14 text-center text-2xl font-mono font-bold bg-white dark:bg-slate-800 border-2 border-blue-500 rounded-lg outline-none text-blue-600 dark:text-blue-400 z-30 relative"
-                    style={{ height: ITEM_HEIGHT - 4 }}
-                    autoFocus
-                  />
-                </div>
-              );
-            }
-
-            return (
-              <div
-                key={idx}
-                onClick={() => { if (isValid && !dragStart.current) { if (isCenter) startEdit(); else onChange(i); } }}
-                className={`flex items-center justify-center font-mono font-bold leading-none overflow-hidden ${
-                  !isValid ? 'opacity-0' :
-                  isCenter && !dragStart.current
-                    ? 'text-blue-600 dark:text-blue-400 text-2xl cursor-text'
-                    : 'text-slate-400 dark:text-slate-500 text-lg cursor-pointer'
-                }`}
-                style={{ height: ITEM_HEIGHT }}
-                title={isCenter ? (label === 'Hrs' ? '點擊輸入' : 'Click to type') : ''}
-              >
-                {isValid ? i.toString().padStart(2, '0') : ''}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <button
-        type="button"
-        onClick={() => nudge(1)}
-        className="p-1 rounded-lg text-slate-400 dark:text-slate-500 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 active:scale-90 transition-all"
-        aria-label={`Increase ${label}`}
-      >
-        <ChevronDown size={20} />
-      </button>
-      <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-300 uppercase tracking-widest -mt-1">{label}</span>
-    </div>
-  );
-}
-
-/* ─── ScrollTimePicker ─── */
-function ScrollTimePicker({ h, m, s, onChangeH, onChangeM, onChangeS }: {
+/* ─── Keyboard Time Picker Component ─── */
+function KeyboardTimePicker({ h, m, s, onChangeH, onChangeM, onChangeS, onEnter }: {
   h: number; m: number; s: number;
   onChangeH: (v: number) => void;
   onChangeM: (v: number) => void;
   onChangeS: (v: number) => void;
+  onEnter?: () => void;
 }) {
+  const hRef = useRef<HTMLInputElement>(null);
+  const mRef = useRef<HTMLInputElement>(null);
+  const sRef = useRef<HTMLInputElement>(null);
+
+  // Auto focus first input (Hours) on mount with a safe delay
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      hRef.current?.focus();
+      hRef.current?.select();
+    }, 150);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleInputChange = (
+    val: string,
+    max: number,
+    onChange: (v: number) => void,
+    nextRef?: React.RefObject<HTMLInputElement | null>
+  ) => {
+    const digits = val.replace(/\D/g, '').slice(0, 2);
+    if (digits === '') {
+      onChange(0);
+      return;
+    }
+    const num = Math.min(max, parseInt(digits));
+    onChange(num);
+
+    // Smart Auto-jump to next field
+    const isAutoJump = digits.length >= 2 || 
+      (digits.length === 1 && (
+        (max === 23 && parseInt(digits) >= 3) || 
+        (max === 59 && parseInt(digits) >= 6)
+      ));
+
+    if (isAutoJump && nextRef && nextRef.current) {
+      nextRef.current.focus();
+      nextRef.current.select();
+    }
+  };
+
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    prevRef?: React.RefObject<HTMLInputElement | null>
+  ) => {
+    if (e.key === 'Backspace' && e.currentTarget.value === '' && prevRef && prevRef.current) {
+      prevRef.current.focus();
+      prevRef.current.select();
+      e.preventDefault();
+    }
+    if (e.key === 'Enter' && onEnter) {
+      onEnter();
+    }
+  };
+
+  const formatVal = (v: number) => (v === 0 ? '' : v.toString());
+
   return (
-    <div className="flex items-center justify-center gap-1 py-2">
-      <WheelColumn value={h} max={24} label="Hrs" onChange={onChangeH} />
-      <span className="text-2xl font-bold text-slate-300 dark:text-slate-600 mb-8">:</span>
-      <WheelColumn value={m} max={60} label="Min" onChange={onChangeM} />
-      <span className="text-2xl font-bold text-slate-300 dark:text-slate-600 mb-8">:</span>
-      <WheelColumn value={s} max={60} label="Sec" onChange={onChangeS} />
+    <div className="flex items-center justify-center gap-2 py-3 bg-slate-50 dark:bg-slate-900/40 rounded-2xl border border-slate-100 dark:border-slate-800/80 px-4 w-full">
+      <div className="flex flex-col items-center gap-1 flex-1">
+        <input
+          ref={hRef}
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          value={formatVal(h)}
+          onChange={e => handleInputChange(e.target.value, 23, onChangeH, mRef)}
+          onKeyDown={e => handleKeyDown(e)}
+          placeholder="00"
+          className="w-full text-center text-2xl font-mono font-bold bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-500 rounded-xl py-2 outline-none text-slate-800 dark:text-slate-100 transition-colors shadow-sm focus:shadow-md"
+        />
+        <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">時 (H)</span>
+      </div>
+      
+      <span className="text-2xl font-black text-slate-300 dark:text-slate-700 mb-5">:</span>
+
+      <div className="flex flex-col items-center gap-1 flex-1">
+        <input
+          ref={mRef}
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          value={formatVal(m)}
+          onChange={e => handleInputChange(e.target.value, 59, onChangeM, sRef)}
+          onKeyDown={e => handleKeyDown(e, hRef)}
+          placeholder="00"
+          className="w-full text-center text-2xl font-mono font-bold bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-500 rounded-xl py-2 outline-none text-slate-800 dark:text-slate-100 transition-colors shadow-sm focus:shadow-md"
+        />
+        <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">分 (M)</span>
+      </div>
+
+      <span className="text-2xl font-black text-slate-300 dark:text-slate-700 mb-5">:</span>
+
+      <div className="flex flex-col items-center gap-1 flex-1">
+        <input
+          ref={sRef}
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          value={formatVal(s)}
+          onChange={e => handleInputChange(e.target.value, 59, onChangeS)}
+          onKeyDown={e => handleKeyDown(e, mRef)}
+          placeholder="00"
+          className="w-full text-center text-2xl font-mono font-bold bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-500 rounded-xl py-2 outline-none text-slate-800 dark:text-slate-100 transition-colors shadow-sm focus:shadow-md"
+        />
+        <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">秒 (S)</span>
+      </div>
     </div>
   );
 }
@@ -623,6 +469,13 @@ export default function PikminDashboard() {
     } else {
       document.documentElement.classList.remove('dark');
     }
+  };
+
+  const handleAddSubmit = () => {
+    const n = (document.getElementById('quick-name') as HTMLInputElement)?.value || "";
+    addMushroom(addH, addM, addS, n, addP);
+    setIsAdding(false);
+    setAddH(0); setAddM(0); setAddS(0); setAddP(5);
   };
 
   const activeMushrooms = mushrooms.filter(m => m.groupId === activeGroupId);
@@ -952,21 +805,16 @@ export default function PikminDashboard() {
                      </button>
                    ))}
                  </div>
-                 <ScrollTimePicker
-                   h={addH} m={addM} s={addS}
-                   onChangeH={setAddH} onChangeM={setAddM} onChangeS={setAddS}
-                 />
+                 <KeyboardTimePicker
+                    h={addH} m={addM} s={addS}
+                    onChangeH={setAddH} onChangeM={setAddM} onChangeS={setAddS}
+                    onEnter={handleAddSubmit}
+                  />
                </div>
 
                <button 
                  id="start-tracking-btn"
-                 onClick={() => {
-                   const n = (document.getElementById('quick-name') as HTMLInputElement).value;
-                   addMushroom(addH, addM, addS, n, addP);
-                   setIsAdding(false);
-                   setAddH(0); setAddM(0); setAddS(0); setAddP(5);
-                   setAddH(0); setAddM(0); setAddS(0);
-                 }}
+                 onClick={handleAddSubmit}
                  className="w-full bg-blue-600 hover:bg-blue-700 active:scale-95 text-white py-4 rounded-2xl font-bold text-lg shadow-[0_10px_20px_rgba(37,99,235,0.3)] transition-all flex items-center justify-center gap-2 mt-2 focus:outline-none focus:ring-4 focus:ring-blue-500/50"
                >
                  <Plus size={24} /> {t.startTracking}
@@ -1029,6 +877,21 @@ function MushroomItem({ m, now, lang, isEditing, setEditingId, onDelete, onUpdat
 
   const timeFmt = formatTime(diff);
 
+  const handleEditSubmit = () => {
+    const updates: Partial<Mushroom> = { 
+      name: editName.trim() || t.defaultMushroom,
+      participants: editP 
+    };
+    if (editTimeChanged) {
+       const battleMs = (editH*3600 + editM*60 + editS)*1000;
+       updates.battleEndTime = Date.now() + battleMs;
+       updates.endTime = updates.battleEndTime + 5 * 60 * 1000;
+       onResetNote();
+    }
+    onUpdate(m.id, updates);
+    setEditingId(null);
+  };
+
   if (isEditing) {
     return (
       <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-3xl shadow-sm border-2 border-blue-500 transition-all text-slate-800 dark:text-slate-100">
@@ -1044,31 +907,19 @@ function MushroomItem({ m, now, lang, isEditing, setEditingId, onDelete, onUpdat
 
         <div className="flex flex-col gap-2 mb-4 bg-slate-50 dark:bg-slate-800/50 p-2.5 sm:p-3 rounded-xl border border-slate-200 dark:border-slate-700">
           <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-bold mb-1 flex items-center gap-1"><Clock size={14} /> {t.resetTime}</div>
-          <ScrollTimePicker
+          <KeyboardTimePicker
             h={editH} m={editM} s={editS}
             onChangeH={v => { setEditH(v); setEditTimeChanged(true); }}
             onChangeM={v => { setEditM(v); setEditTimeChanged(true); }}
             onChangeS={v => { setEditS(v); setEditTimeChanged(true); }}
+            onEnter={handleEditSubmit}
           />
         </div>
 
         <div className="flex gap-2">
           <button 
             id={`save-edit-btn-${m.id}`}
-            onClick={() => {
-              const updates: Partial<Mushroom> = { 
-                name: editName.trim() || t.defaultMushroom,
-                participants: editP 
-              };
-              if (editTimeChanged) {
-                 const battleMs = (editH*3600 + editM*60 + editS)*1000;
-                 updates.battleEndTime = Date.now() + battleMs;
-                 updates.endTime = updates.battleEndTime + 5 * 60 * 1000;
-                 onResetNote();
-              }
-              onUpdate(m.id, updates);
-              setEditingId(null);
-            }}
+            onClick={handleEditSubmit}
             className="bg-blue-600 text-white px-4 py-3 rounded-xl flex-1 font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-500/30 active:scale-95 transition-transform hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-500/50"
           >
             <Check size={18} /> {t.saveChanges}
