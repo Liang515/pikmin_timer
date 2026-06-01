@@ -105,6 +105,18 @@ function KeyboardTimePicker({ h, m, s, onChangeH, onChangeM, onChangeS, onEnter 
   const mRef = useRef<HTMLInputElement>(null);
   const sRef = useRef<HTMLInputElement>(null);
 
+  // Local string state to handle typing "0", "05", or blank states smoothly
+  const [hStr, setHStr] = useState(h === 0 ? "" : h.toString());
+  const [mStr, setMStr] = useState(m === 0 ? "" : m.toString());
+  const [sStr, setSStr] = useState(s === 0 ? "" : s.toString());
+
+  // Sync inputs if parent values change (such as when clicking preset buttons like 15m/30m/1h)
+  useEffect(() => {
+    setHStr(h === 0 ? "" : h.toString());
+    setMStr(m === 0 ? "" : m.toString());
+    setSStr(s === 0 ? "" : s.toString());
+  }, [h, m, s]);
+
   // Auto focus first input (Hours) on mount with a safe delay
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -117,15 +129,15 @@ function KeyboardTimePicker({ h, m, s, onChangeH, onChangeM, onChangeS, onEnter 
   const handleInputChange = (
     val: string,
     max: number,
+    setStr: (s: string) => void,
     onChange: (v: number) => void,
     nextRef?: React.RefObject<HTMLInputElement | null>
   ) => {
     const digits = val.replace(/\D/g, '').slice(0, 2);
-    if (digits === '') {
-      onChange(0);
-      return;
-    }
-    const num = Math.min(max, parseInt(digits));
+    setStr(digits);
+
+    const parsed = digits === '' ? 0 : parseInt(digits);
+    const num = Math.min(max, parsed);
     onChange(num);
 
     // Smart Auto-jump to next field
@@ -155,8 +167,6 @@ function KeyboardTimePicker({ h, m, s, onChangeH, onChangeM, onChangeS, onEnter 
     }
   };
 
-  const formatVal = (v: number) => (v === 0 ? '' : v.toString());
-
   return (
     <div className="flex items-center justify-center gap-2 py-3 bg-slate-50 dark:bg-slate-900/40 rounded-2xl border border-slate-100 dark:border-slate-800/80 px-4 w-full">
       <div className="flex flex-col items-center gap-1 flex-1">
@@ -165,8 +175,8 @@ function KeyboardTimePicker({ h, m, s, onChangeH, onChangeM, onChangeS, onEnter 
           type="text"
           inputMode="numeric"
           pattern="[0-9]*"
-          value={formatVal(h)}
-          onChange={e => handleInputChange(e.target.value, 23, onChangeH, mRef)}
+          value={hStr}
+          onChange={e => handleInputChange(e.target.value, 23, setHStr, onChangeH, mRef)}
           onKeyDown={e => handleKeyDown(e)}
           placeholder="00"
           className="w-full text-center text-2xl font-mono font-bold bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 focus:border-emerald-500 dark:focus:border-emerald-500 rounded-xl py-2 outline-none text-slate-800 dark:text-slate-100 transition-colors shadow-sm focus:shadow-md"
@@ -182,8 +192,8 @@ function KeyboardTimePicker({ h, m, s, onChangeH, onChangeM, onChangeS, onEnter 
           type="text"
           inputMode="numeric"
           pattern="[0-9]*"
-          value={formatVal(m)}
-          onChange={e => handleInputChange(e.target.value, 59, onChangeM, sRef)}
+          value={mStr}
+          onChange={e => handleInputChange(e.target.value, 59, setMStr, onChangeM, sRef)}
           onKeyDown={e => handleKeyDown(e, hRef)}
           placeholder="00"
           className="w-full text-center text-2xl font-mono font-bold bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 focus:border-emerald-500 dark:focus:border-emerald-500 rounded-xl py-2 outline-none text-slate-800 dark:text-slate-100 transition-colors shadow-sm focus:shadow-md"
@@ -199,8 +209,8 @@ function KeyboardTimePicker({ h, m, s, onChangeH, onChangeM, onChangeS, onEnter 
           type="text"
           inputMode="numeric"
           pattern="[0-9]*"
-          value={formatVal(s)}
-          onChange={e => handleInputChange(e.target.value, 59, onChangeS)}
+          value={sStr}
+          onChange={e => handleInputChange(e.target.value, 59, setSStr, onChangeS)}
           onKeyDown={e => handleKeyDown(e, mRef)}
           placeholder="00"
           className="w-full text-center text-2xl font-mono font-bold bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 focus:border-emerald-500 dark:focus:border-emerald-500 rounded-xl py-2 outline-none text-slate-800 dark:text-slate-100 transition-colors shadow-sm focus:shadow-md"
