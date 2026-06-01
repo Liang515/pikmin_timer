@@ -1,36 +1,67 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🍄 皮克敏個人離線版蘑菇戰報 (Pikmin Offline Mushroom Timer)
 
-## Getting Started
+歡迎來到 **皮克敏個人離線版蘑菇戰報**！這是一個專門為《皮克敏 Bloom (Pikmin Bloom)》單人玩家設計的**極致輕量、隱私優先且全本地儲存的蘑菇重生倒數追蹤器**。
 
-First, run the development server:
+本專案採用純前端 Next.js 架構，所有蘑菇戰鬥紀錄與區域名稱皆完全儲存在您的瀏覽器本地 (`localStorage`) 中。不需註冊、不需設定任何雲端資料庫，即開即用，極致省電且 100% 保證您的位置與打菇數據隱私！
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## ✨ 核心特色與亮點
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 👤 全本地離線優先 (Offline-First)
+- **數據 100% 本地化**：數據儲存在您個人的瀏覽器快取中，即使在地下鐵、山區等訊號微弱或無網路的地方，依然可以流暢開啟並記錄時間。
+- **無感載入**：零外部 API 請求，首頁載入在毫秒內完成，給您宛如原生 App 般的疾速體驗。
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 🏷️ 零彈窗內置區域管理 (Tab / Area Management)
+- **區域快速分類**：可以針對您的日常打菇路線（例如：家裡、公司、公園、捷運站）建立不同的區域分頁。
+- **極簡無彈窗編輯**：
+  - 點選 `+ 區域` 即可在分頁列原處直接輸入名稱建立分頁。
+  - **雙擊分頁按鈕**即可在原處直接修改區域名稱。
+  - 點選垃圾桶按鈕即可直接刪除該區域及其下方的所有蘑菇，全程無任何礙眼的彈出式視窗。
+- **分頁下緣裁切完美修復**：徹底解決了未選取分頁被切到下邊緣的排版瑕疵，不論滑鼠懸停還是手機觸控，分頁列的下邊緣均能完整顯現。
+- **自適應展開網格**：右側設有向下箭頭按鈕，點選即可展開「所有區域快速選擇」網格，並即時顯示每個區域當前的蘑菇追蹤數量，點選即可快速切換！
 
-## Learn More
+### 📱 頂級行動端優化 (iOS Auto-Zoom Fix)
+- **固定視埠防縮放**：鎖定 Viewport 比例，雙指捏合或點選輸入時，網頁寬度絕不隨意晃動、抖動。
+- **iOS 焦點防放大優化**：將所有文字輸入框（區域名稱、修改蘑菇名稱）字體全面升級至 `16px (text-base)`。**徹底解決 iOS Safari / Chrome 在點選輸入時會強制自動放大網頁、鍵盤收起後必須手動縮小的經典網頁體驗 Bug！**
+- **底部防遮擋安全留白**：在蘑菇列表最下方自動渲染一個安全高度留白，徹底解決了最下方的蘑菇卡片按鈕會被右下角浮動新增按鈕 (FAB) 擋住的操作衝突。
 
-To learn more about Next.js, take a look at the following resources:
+### 🎨 絢麗的高質感皮克敏美學
+- **夕陽黃金桃紅漸層**：戰鬥結束後的 5 分鐘重生狀態採用溫暖明亮的落日漸層 (`from-[#f8a532] to-[#e75a24]`)。
+- **溫和嫩葉鼠尾草綠**：正常戰鬥狀態採用柔和的嫩葉草綠 (`from-[#809b7b] to-[#5d7c58]`)，護眼又符合皮克敏的大自然氛圍。
+- **高質感玻璃擬態卡片**：戰鬥結束且重生完成的蘑菇卡片會轉換為高雅的半透明白色玻璃質感 (`bg-white/70 backdrop-blur-md`)，並去除多餘的呼吸起伏動畫，讓您看著螢幕眼睛不疲累。
+- **精準輸入修復**：修復了時間輸入框輸入 `0` 或前導零（例如 `05` 分）會自動消失的 React 受控元件 Bug，現在輸入體驗完美流暢。
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🚀 部署到 Vercel (完全免費)
 
-## Deploy on Vercel
+本專案完全相容於 Vercel 的免費 Next.js 靜態發佈服務。您可以用以下任一方式輕鬆部署，將網頁加到您的手機主畫面上：
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 方式一：Vercel CLI 終端機一分鐘部署（免用 GitHub）
+1. 在專案目錄下執行：
+   ```bash
+   npx vercel
+   ```
+2. 按照畫面提示一律按 **Enter** 接受預設值即可部署完成！
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 方式二：連動 GitHub 自動部署（推薦，持續整合）
+1. 將本專案推送至您的個人 GitHub 倉庫。
+2. 前往 [Vercel 官網](https://vercel.com/)，匯入您的該 GitHub 存放庫。
+3. 點選 **Deploy** 即完成！往後只要您 `git push` 更新代碼，網站就會自動無感更新。
+
+---
+
+## 💻 本地端開發
+
+1. 安裝套件：
+   ```bash
+   npm install
+   ```
+2. 啟動本地開發伺服器：
+   ```bash
+   npm run dev
+   ```
+3. 打開瀏覽器至 [http://localhost:3000](http://localhost:3000) 即可開始測試。
+
+祝您打菇愉快！🍄⚔️
