@@ -345,11 +345,19 @@ export default function PikminDashboard() {
     return () => clearInterval(timer);
   }, []);
 
+  // Save mushrooms and groups only when they actually change
   useEffect(() => {
     localStorage.setItem('pikmin_mushrooms', JSON.stringify(mushrooms));
     localStorage.setItem('pikmin_groups', JSON.stringify(groups));
+  }, [mushrooms, groups]);
+
+  // Save language preference unconditionally on change
+  useEffect(() => {
     localStorage.setItem('pikmin_lang', lang);
-    
+  }, [lang]);
+
+  // Handle local notifications
+  useEffect(() => {
     mushrooms.forEach(m => {
       const bEnd = m.battleEndTime || (m.endTime - 5 * 60000);
       if (now >= bEnd && !notifiedSet.current.has(m.id + '_battle')) {
@@ -365,7 +373,7 @@ export default function PikminDashboard() {
         }
       }
     });
-  }, [mushrooms, groups, now, lang]);
+  }, [mushrooms, now, lang]);
 
   const addMushroom = (h: number, m: number, s: number, name: string, participants: number) => {
     const battleMs = (h * 3600 + m * 60 + s) * 1000;

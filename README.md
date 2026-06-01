@@ -1,3 +1,5 @@
+[English Version](./README.en.md) | [繁體中文版](./README.md)
+
 # 🍄 皮克敏個人離線版蘑菇戰報 (Pikmin Offline Mushroom Timer)
 
 歡迎來到 **皮克敏個人離線版蘑菇戰報**！這是一個專門為《皮克敏 Bloom (Pikmin Bloom)》單人玩家設計的**極致輕量、隱私優先且全本地儲存的蘑菇重生倒數追蹤器**。
